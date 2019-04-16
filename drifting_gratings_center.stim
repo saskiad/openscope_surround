@@ -1,0 +1,31 @@
+#path = r"C:\Users\svc_ncbehavior\Desktop\stimulus\HawkenSO.npy"
+#HawkenSO = np.load(path)
+
+stimulus = Stimulus(visual.GratingStim(window,
+                    pos=(0, 0),
+                    units='deg',
+                    size=(40, 40), 
+                    mask="raisedCos",
+                    maskParams={'fringeWidth':0.5},
+                    texRes=256,
+                    sf=0.1,
+                    ),
+    sweep_params={
+               'Contrast': ([0.8], 2),
+               'TF': ([1,2],0),
+               'SF': ([0.04], 3),
+               'Ori': (range(0, 360, 45), 1),
+               },
+    sweep_length=2.0,
+    start_time=0.0,
+    blank_length=1.0,
+    blank_sweeps=0,
+    runs=1,
+    shuffle=True,
+    save_sweep_table=True,
+    )
+
+#stim.sweep_order = HawkenSO[:,1].astype(int).tolist()
+#stim._build_frame_list()
+
+#size=(250,250)
