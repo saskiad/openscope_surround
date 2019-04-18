@@ -8,8 +8,8 @@ import numpy as np
 import shutil
 from camstim.core import checkDirs, ImageStimNumpyuByte
 
-moviesource = "//aibsdata/neuralcoding/Saskia/Visual Stimuli 151207/sparse_noise_no_boundary_16x28_scaled.npy"
-moviepath = "C:/camstim/movies/sparse_noise_no_boundary_16x28_scaled.npy"
+moviesource = r"\\aibsdata\mat\michaelbu\Locally_Sparse_Noise_Trimmed\short\lsn_mat_8x14_short.npy"
+moviepath = r"C:\Users\Public\Desktop\pythondev\cam2p_scripts\tests\openscope_surround\sparse_noise_8x14.npy"
 
 if os.path.isfile(moviepath):
     pass
