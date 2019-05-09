@@ -4,7 +4,7 @@
 stimulus = Stimulus(visual.GratingStim(window,
                     pos=(0, 0),
                     units='deg',
-                    size=(40, 40), 
+                    size=(30, 30), 
                     mask="raisedCos",
                     maskParams={'fringeWidth':0.5},
                     texRes=256,

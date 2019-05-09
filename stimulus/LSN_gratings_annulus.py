@@ -10,7 +10,7 @@ import numpy as np
 # Create display window
 window = Window(fullscr=True,
                 monitor='Gamma1.Luminance50',
-                screen=1,
+                screen=0,
                 warp=Warp.Spherical,
                 )
 
@@ -23,6 +23,7 @@ annulus_1_path = "drifting_gratings_annulus_1.stim"
 annulus_2_path = "drifting_gratings_annulus_2.stim"
 annulus_3_path = "drifting_gratings_annulus_3.stim"
 annulus_4_path = "drifting_gratings_annulus_4.stim"
+annulus_5_path = "drifting_gratings_annulus_5.stim"
 lsn_path  = "locally_sparse_noise.stim"
 
 path = r"C:\Users\Public\Desktop\pythondev\cam2p_scripts\tests\openscope_surround\grating_order.npy"
@@ -38,21 +39,17 @@ annulus_1 = Stimulus.from_file(annulus_1_path, window)
 annulus_2 = Stimulus.from_file(annulus_2_path, window)
 annulus_3 = Stimulus.from_file(annulus_3_path, window)
 annulus_4 = Stimulus.from_file(annulus_4_path, window)
+annulus_5 = Stimulus.from_file(annulus_5_path, window)
 
-center_size = 30    #in degrees
-posx = 0    #in degrees
-posy = 0    #in degrees
+posx = 20    #in degrees
+posy = 10    #in degrees
 
-center.stim.size = (center_size, center_size)
-annulus_1.stim.size =(center_size+5, center_size+5)
-annulus_2.stim.size =(center_size+10, center_size+10)
-annulus_3.stim.size =(center_size+15, center_size+15)
-annulus_4.stim.size =(center_size+20, center_size+20)
 center.stim.pos = (posx, posy)
 annulus_1.stim.pos = (posx, posy)
 annulus_2.stim.pos = (posx, posy)
 annulus_3.stim.pos = (posx, posy)
 annulus_4.stim.pos = (posx, posy)
+annulus_5.stim.pos = (posx, posy)
 surround.stim.pos = (posx, posy)
 
 center.sweep_order = stim_order[:,1].astype(int).tolist()
@@ -67,23 +64,19 @@ annulus_3.sweep_order = stim_order[:,2].astype(int).tolist()
 annulus_3._build_frame_list()
 annulus_4.sweep_order = stim_order[:,2].astype(int).tolist()
 annulus_4._build_frame_list()
-
+annulus_5.sweep_order = stim_order[:,2].astype(int).tolist()
+annulus_5._build_frame_list()
 
 # set display sequences
-center_ds = [(0,1200),(2742,3942)]
-surround_ds=[(0,1200),(2742,3942)]
-annulus_1_ds = [(0,1200),(2742,3942)]
-annulus_2_ds = [(0,1200),(2742,3942)]
-annulus_3_ds = [(0,1200),(2742,3942)]
-annulus_4_ds = [(0,1200),(2742,3942)]
-lsn_ds=[(1220,1820),(2122,2722)]
+gratings_ds = [(0,1200),(1820,3020)]
+lsn_ds=[(1210,1810),(3030,3630)]
 
-center.set_display_sequence(center_ds)
-surround.set_display_sequence(surround_ds)
-annulus_1.set_display_sequence(annulus_1_ds)
-annulus_2.set_display_sequence(annulus_1_ds)
-annulus_3.set_display_sequence(annulus_1_ds)
-annulus_4.set_display_sequence(annulus_1_ds)
+center.set_display_sequence(gratings_ds)
+surround.set_display_sequence(gratings_ds)
+annulus_1.set_display_sequence(gratings_ds)
+annulus_2.set_display_sequence(gratings_ds)
+annulus_3.set_display_sequence(gratings_ds)
+annulus_4.set_display_sequence(gratings_ds)
 lsn.set_display_sequence(lsn_ds)
 
 # kwargs
@@ -100,7 +93,7 @@ params = {
 
 # create SweepStim instance
 ss = SweepStim(window,
-               stimuli=[surround,annulus_4,annulus_3,annulus_2,annulus_1,center,lsn],
+               stimuli=[surround,annulus_1,annulus_2,annulus_3,annulus_4,annulus_5,center,lsn],
                pre_blank_sec=2,
                post_blank_sec=2,
                params=params,

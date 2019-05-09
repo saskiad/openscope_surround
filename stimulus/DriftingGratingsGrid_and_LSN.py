@@ -26,8 +26,8 @@ dg = Stimulus.from_file(dg_path, window)
 lsn = Stimulus.from_file(lsn_path, window)
 
 # set display sequences
-dg_ds = [(0, 1500)]
-lsn_ds = [(1520,3020)]
+dg_ds = [(0, 915),(2735,3650)]
+lsn_ds = [(925,2725)]
 
 dg.set_display_sequence(dg_ds)
 lsn.set_display_sequence(lsn_ds)
