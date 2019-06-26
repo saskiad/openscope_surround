@@ -141,6 +141,21 @@ def get_attribute_by_sweep(data,stimulus_idx,attribute):
 
     return attribute_by_sweep
     
+def get_center_coordinates(data):
+    
+    center_idx = get_stimulus_index(data,'center')
+    stim_definition = data['stimuli'][center_idx]['stim']
+    
+    position_idx = stim_definition.find('pos=array(')
+    coor_start = position_idx + stim_definition[position_idx:].find('[') + 1
+    coor_end = position_idx + stim_definition[position_idx:].find(']')
+    comma_idx = position_idx + stim_definition[position_idx:].find(',')
+    
+    x_coor = float(stim_definition[coor_start:comma_idx])
+    y_coor = float(stim_definition[(comma_idx+1):coor_end])
+    
+    return x_coor, y_coor
+    
 def get_attribute_idx(data,stimulus_idx,attribute):
     
     attribute_names = data['stimuli'][stimulus_idx]['dimnames']
