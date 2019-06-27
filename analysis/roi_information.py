@@ -26,8 +26,8 @@ def get_roi_information(storage_directory):
             id     -- ROI number???
             x      -- x coordinate of ROI center
             y      -- y coordinate of ROI center
-            width  -- width of ovoid ROI
-            height -- height of ovoid ROI
+            width  -- width of ROI
+            height -- height of ROI
             valid  -- ???
             mask   -- Boolean mask for pixels included in ROI
 

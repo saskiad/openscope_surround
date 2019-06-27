@@ -136,6 +136,7 @@ def center_surround_table(data, twop_frames, verbose = True):
         columns=('Start', 'End')
     )
 
+    # TODO make this take either center or surround SF and TF depending on which is not NaN
     for attribute in ['TF', 'SF', 'Contrast']:
         stim_table[attribute] = get_attribute_by_sweep(
             data, center_idx, attribute
