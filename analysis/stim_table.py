@@ -378,6 +378,21 @@ def load_sync(exptpath, verbose = True):
 
     return twop_frames, twop_vsync_fall, stim_vsync_fall, photodiode_rise
 
+def get_center_coordinates(data):
+
+    center_idx = get_stimulus_index(data,'center')
+    stim_definition = data['stimuli'][center_idx]['stim']
+
+    position_idx = stim_definition.find('pos=array(')
+    coor_start = position_idx + stim_definition[position_idx:].find('[') + 1
+    coor_end = position_idx + stim_definition[position_idx:].find(']')
+    comma_idx = position_idx + stim_definition[position_idx:].find(',')
+
+    x_coor = float(stim_definition[coor_start:comma_idx])
+    y_coor = float(stim_definition[(comma_idx+1):coor_end])
+
+    return x_coor, y_coor
+
 
 if __name__ == '__main__':
     exptpath = r'\\allen\programs\braintv\production\neuralcoding\prod55\specimen_859061987\ophys_session_882666374\\'
