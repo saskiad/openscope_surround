@@ -13,6 +13,55 @@ import pandas as pd
 from sync import Dataset
 
 
+def create_stim_tables(
+    exptpath,
+    stimulus_names = ['locally_sparse_noise',
+                      'center_surround', 'drifting_gratings_grid'],
+    verbose = True):
+    """Create a stim table from data located in folder exptpath.
+
+    Tries to extract a stim_table for each stim type in stimulus_names and
+    continues if KeyErrors are produced.
+
+    Inputs:
+        exptpath (str)
+            -- Path to directory in which to look for experiment-related files.
+        stimulus_names (list of strs)
+            -- Types of stimuli to try extracting.
+        verbose (bool, default True)
+            -- Print information about progress.
+
+    Returns:
+        Dict of DataFrames with information about start and end times of each
+        stimulus presented in a given experiment.
+
+    """
+    data = load_stim(exptpath)
+    twop_frames, _, _, _ = load_sync(exptpath)
+
+    stim_table_funcs = {
+        'locally_sparse_noise': locally_sparse_noise_table,
+        'center_surround': center_surround_table,
+        'drifting_gratings_grid': DGgrid_table
+    }
+    stim_table = {}
+    for stim_name in stimulus_names:
+        try:
+            stim_table[stim_name] = stim_table_funcs[stim_name](
+                data, twop_frames
+            )
+        except KeyError:
+            if verbose:
+                print(
+                    'Could not locate stimulus type {} in {}'.format(
+                        stim_name, exptpath
+                    )
+                )
+            continue
+
+    return stim_table
+
+
 def coarse_mapping_create_stim_table(exptpath):
     """Return stim_tables for locally sparse noise and drifting gratings grid.
 
