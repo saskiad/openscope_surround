@@ -395,6 +395,26 @@ def get_center_coordinates(data):
     return x_coor, y_coor
 
 
+def print_summary(stim_table):
+    """Print summary of generated stim_table.
+
+    Print column names, number of 'unique' conditions per column (treating
+    nans as equal), and average number of samples per condition.
+    """
+    print(
+        '{:<20}{:>15}{:>15}\n'.format('Colname', 'No. conditions', 'Mean N/cond')
+    )
+    for colname in stim_table.columns:
+        conditions, occurrences = np.unique(
+            np.nan_to_num(stim_table[colname]), return_counts = True
+        )
+        print(
+            '{:<20}{:>15}{:>15.1f}'.format(
+                colname, len(conditions), np.mean(occurrences)
+            )
+        )
+
+
 if __name__ == '__main__':
     exptpath = r'\\allen\programs\braintv\production\neuralcoding\prod55\specimen_859061987\ophys_session_882666374\\'
     lsnCS_create_stim_table(exptpath)
