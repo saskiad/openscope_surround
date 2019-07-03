@@ -54,7 +54,7 @@ for specimen in os.listdir(DATA_PATH):
         tmp_path = os.path.join(DATA_PATH, specimen, session)
         try:
             with util.gagProcess():
-                stim_stuff[specimen][session]['tables'] = st.lsnCS_create_stim_table(tmp_path)
+                stim_stuff[specimen][session]['tables'] = st.create_stim_tables(tmp_path, ['center_surround'])
                 util.populate_columns(
                     stim_stuff[specimen][session]['tables']['center_surround'],
                     inplace = True
