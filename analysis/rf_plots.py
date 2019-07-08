@@ -1,3 +1,8 @@
+"""Generate receptive field plots for all experiments.
+
+@author: Emerson
+"""
+
 #%% IMPORT MODULES
 
 import os
@@ -15,9 +20,9 @@ import analysis.chi_square_lsn as chisq
 
 #%% CREATE STIM TABLES
 
-DATA_PATH = os.path.join('/', 'Volumes', '1848', 'openscope2019_data')
+DATA_PATH = os.path.join('/', 'Volumes', '1848', 'openscope2019_data')  # Where data is stored.
 
-sparse = np.load('./stimulus/sparse_noise_8x14.npy')
+sparse = np.load('./stimulus/sparse_noise_8x14.npy')  # Load stimulus numpy file.
 
 stim_stuff = {}
 for specimen in os.listdir(DATA_PATH):
@@ -46,16 +51,19 @@ experiments_df = pd.read_csv(os.path.join('analysis', 'manifest.csv'))
 
 #%% GENERATE RF PLOTS
 
-PLOT_PATH = 'plots'
+PLOT_PATH = 'plots'  # Where to save output plots.
 
 for specimen in stim_stuff.keys():
     for session in stim_stuff[specimen].keys():
         print('Analyzing RFs for specimen {} session {}'.format(specimen, session))
+
+        # Ensure that current session has locally_sparse_noise.
         try:
             tmp_stim_table = stim_stuff[specimen][session]['tables']['locally_sparse_noise']
         except KeyError:
             continue
 
+        # Open HDF5 file with DF/F traces.
         roi_traces = h5py.File(
             util.find_by_suffix(
                 util.find_by_prefix(
@@ -83,8 +91,9 @@ for specimen in stim_stuff.keys():
                 roi_traces['data'][:, timeslice], axis = 1
             )
 
-        roi_traces.close()
+        roi_traces.close()  # Close HDF5 file since it's no longer needed.
 
+        # Extract RFs using Dan's code.
         with util.gagProcess():
             p_vals = chisq.chi_square_RFs(responses, sparse[tmp_stim_table['Frame'], ...])
 
@@ -123,23 +132,3 @@ for specimen in stim_stuff.keys():
             dpi = 200
         )
         plt.close('all')
-
-
-#%%
-p_vals.shape
-np.sum(np.sum(p_vals.reshape((80, -1))<0.05, axis = 1) == 0)
-
-fig = plt.figure()
-ax = plt.subplot(111)
-mat = ax.matshow(p_vals[6, ...], vmin = 0, vmax = 1)
-fig.colorbar(mat, ax = ax)
-
-#%%
-
-
-plt.matshow(rf_mask(p_vals)[10, ...])
-
-fig = plt.figure()
-ax = plt.subplot(111)
-mat = ax.matshow(np.sum(rf_mask(p_vals), axis = 0))
-fig.colorbar(mat, ax = ax)

@@ -13,6 +13,7 @@ import pandas as pd
 from sync import Dataset
 
 
+# Generic interface for creating stim tables. PREFERRED.
 def create_stim_tables(
     exptpath,
     stimulus_names = ['locally_sparse_noise',
@@ -62,6 +63,7 @@ def create_stim_tables(
     return stim_table
 
 
+# DEPRECATED. Use `create_stim_tables(exptpath, ['locally_sparse_noise', 'drifting_gratings_grid'])` instead.
 def coarse_mapping_create_stim_table(exptpath):
     """Return stim_tables for locally sparse noise and drifting gratings grid.
 
@@ -84,6 +86,7 @@ def coarse_mapping_create_stim_table(exptpath):
     return stim_table
 
 
+# DEPRECATED. Use `create_stim_tables(exptpath, ['locally_sparse_noise', 'center_surround'])` instead.
 def lsnCS_create_stim_table(exptpath):
     """Return stim_tables for locally sparse noise and center surround stimuli.
 
@@ -185,7 +188,7 @@ def center_surround_table(data, twop_frames, verbose = True):
         columns=('Start', 'End')
     )
 
-    # TODO make this take either center or surround SF and TF depending on which is not NaN
+    # TODO: make this take either center or surround SF and TF depending on which is not NaN
     for attribute in ['TF', 'SF', 'Contrast']:
         stim_table[attribute] = get_attribute_by_sweep(
             data, center_idx, attribute
