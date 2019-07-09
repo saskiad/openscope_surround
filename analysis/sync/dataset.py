@@ -47,7 +47,7 @@ class Dataset(object):
     """
 
     def __init__(self, path):
-        self.dfile = self.load(path)
+        self.load(path)
 
         self.times = self._process_times()
 
@@ -66,10 +66,10 @@ class Dataset(object):
         """
         Loads an hdf5 sync dataset.
         """
-        dfile = h5.File(path, 'r')
-        self.meta_data = eval(dfile['meta'].value)
+        self.dfile = h5.File(path, 'r')
+        self.meta_data = eval(self.dfile['meta'].value)
         self.line_labels = self.meta_data['line_labels']
-        return dfile
+        return self.dfile
 
     def get_bit(self, bit):
         """
@@ -264,7 +264,7 @@ class Dataset(object):
 
     def period(self, line, edge="rising"):
         """
-        Returns a dictionary with avg, min, max, and st of period for a line.
+        Returns a dictionary with avg, min, max, and sd of period for a line.
         """
         bit = self._line_to_bit(line)
 
@@ -306,7 +306,8 @@ class Dataset(object):
         Returns the duty cycle of a line.
 
         """
-        return "fix me"
+        raise NotImplementedError
+
         bit = self._line_to_bit(line)
 
         rising = self.get_rising_edges(bit)
