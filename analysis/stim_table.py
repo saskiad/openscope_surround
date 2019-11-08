@@ -468,5 +468,6 @@ def print_summary(stim_table):
 
 
 if __name__ == '__main__':
-    exptpath = r'\\allen\programs\braintv\production\neuralcoding\prod55\specimen_859061987\ophys_session_882666374\\'
-    lsnCS_create_stim_table(exptpath)
+#    exptpath = r'\\allen\programs\braintv\production\neuralcoding\prod55\specimen_859061987\ophys_session_882666374\\'
+    exptpath = r'/Volumes/My Passport/Openscope Multiplex/891653201'
+    stim_table = lsnCS_create_stim_table(exptpath)
