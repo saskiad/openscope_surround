@@ -162,7 +162,7 @@ class SyncDevice(Device, metaclass=DeviceMeta):
 
     @command(dtype_in=str, dtype_out=None)
     def throw(self, msg):
-        print("Raising exception:", msg)
+        print(("Raising exception:", msg))
         #Send to error handler or sequencing engine
 
     @command(dtype_in=None, dtype_out=None)
@@ -209,7 +209,7 @@ class SyncDevice(Device, metaclass=DeviceMeta):
         """
         Loads a configuration from a .pkl file.
         """
-        print("Loading configuration: %s" % path)
+        print(("Loading configuration: %s" % path))
 
         with open(path, 'rb') as f:
             config = pickle.load(f)
@@ -228,7 +228,7 @@ class SyncDevice(Device, metaclass=DeviceMeta):
         """
         Saves a configuration to a .pkl file.
         """
-        print("Saving configuration: %s" % path)
+        print(("Saving configuration: %s" % path))
 
         config = {
             'device': self.attr_device,

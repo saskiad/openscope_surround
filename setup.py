@@ -3,7 +3,7 @@ import setuptools
 setuptools.setup(
     name='openscope',
     description='Tools for surround-suppression AIBS Open Scope project.',
-    packages=['analysis'],
+    packages=['oscopetools'],
     install_requires=[
         'psychopy',
         'numpy',
@@ -12,5 +12,6 @@ setuptools.setup(
         'h5py',
         'pillow',
         'nd2reader',
+        'pg8000'
     ]
 )

@@ -98,7 +98,7 @@ class Sync(object):
 
         # Configure Pulse Generator
         if self.verbose:
-            print("Counter input terminal", self.ci.getCountEdgesTerminal())
+            print(("Counter input terminal", self.ci.getCountEdgesTerminal()))
 
         self.co = CounterOutputFreq(device=device,
                                     counter=counter_output,
@@ -107,7 +107,7 @@ class Sync(object):
                                     duty_cycle=0.50,)
 
         if self.verbose:
-            print("Counter output terminal: ", self.co.getPulseTerminal())
+            print(("Counter output terminal: ", self.co.getPulseTerminal()))
 
         # Configure Event Input
         self.ei = EventInput(device=device,
@@ -201,15 +201,15 @@ class Sync(object):
         h5_output.create_dataset("meta", data=meta_data_np)
         h5_output.close()
         if self.verbose:
-            print("Recorded %i events." % len(data))
-            print("Metadata: %s" % meta_data)
-            print("Saving to %s" % filename)
+            print(("Recorded %i events." % len(data)))
+            print(("Metadata: %s" % meta_data))
+            print(("Saving to %s" % filename))
             try:
                 ds = Dataset(filename)
                 ds.stats()
                 ds.close()
             except Exception as e:
-                print("Failed to print quick stats: %s" % e)
+                print(("Failed to print quick stats: %s" % e))
 
     def _get_meta_data(self):
         """

@@ -18,8 +18,8 @@ import matplotlib.gridspec as gs
 import h5py
 import pandas as pd
 
-import analysis.stim_table as st
-from analysis import util
+import oscopetools.stim_table as st
+from oscopetools import util
 
 
 #%% DEFINE USEFUL FUNCTIONS FOR OPERATING ON TUNING CURVE MATRICES

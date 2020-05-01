@@ -58,7 +58,7 @@ response events_off: mean response, s.e.m., and number of responsive trials for 
 
 
         '''
-        sweep_events = pd.DataFrame(index=self.stim_table.index.values, columns=np.array(range(self.numbercells)).astype(str))
+        sweep_events = pd.DataFrame(index=self.stim_table.index.values, columns=np.array(list(range(self.numbercells))).astype(str))
         running_speed = pd.DataFrame(index=self.stim_table.index.values, columns=('running_speed','null'))
         for index,row in self.stim_table.iterrows():
             for nc in range(self.numbercells):
@@ -69,11 +69,11 @@ response events_off: mean response, s.e.m., and number of responsive trials for 
 
         #make spontaneous p_values
         shuffled_responses = np.empty((self.numbercells, 10000,10))
-        idx = np.random.choice(range(self.stim_table_sp.start[0], self.stim_table_sp.end[0]), 10000)
+        idx = np.random.choice(list(range(self.stim_table_sp.start[0], self.stim_table_sp.end[0])), 10000)
         for i in range(10):
             shuffled_responses[:,:,i] = self.l0_events[:,idx+i]
         shuffled_mean = shuffled_responses.mean(axis=2)
-        sweep_p_values = pd.DataFrame(index = self.stim_table.index.values, columns=np.array(range(self.numbercells)).astype(str))
+        sweep_p_values = pd.DataFrame(index = self.stim_table.index.values, columns=np.array(list(range(self.numbercells))).astype(str))
         for nc in range(self.numbercells):
             subset = mean_sweep_events[str(nc)].values
             null_dist_mat = np.tile(shuffled_mean[nc,:], reps=(len(subset),1))
@@ -109,7 +109,7 @@ Returns
 peak dataframe
         '''
         if lsn_name=='locally_sparse_noise':
-            peak = pd.DataFrame(columns=('cell_specimen_id','rf_on','rf_off'), index=range(self.numbercells))
+            peak = pd.DataFrame(columns=('cell_specimen_id','rf_on','rf_off'), index=list(range(self.numbercells)))
             peak['rf_on'] = False
             peak['rf_off'] = False
             peak.cell_specimen_id = self.specimen_ids
@@ -118,7 +118,7 @@ peak dataframe
             peak.rf_on.loc[on_rfs] = True 
             peak.rf_off.loc[off_rfs] = True 
         else:
-            peak = pd.DataFrame(columns=('cell_specimen_id','rf_on_4deg','rf_off_4deg','rf_on_8deg','rf_off_8deg'), index=range(self.numbercells))
+            peak = pd.DataFrame(columns=('cell_specimen_id','rf_on_4deg','rf_off_4deg','rf_on_8deg','rf_off_8deg'), index=list(range(self.numbercells)))
             peak['rf_on_4deg'] = False
             peak['rf_off_4deg'] = False
             peak['rf_on_8deg'] = False
@@ -136,7 +136,7 @@ peak dataframe
 
     def save_data(self, lsn_name):
         save_file = os.path.join(self.save_path, str(self.session_id)+"_lsn_events_analysis.h5")
-        print "Saving data to: ", save_file
+        print("Saving data to: ", save_file)
         if lsn_name=='locally_sparse_noise':
             store = pd.HDFStore(save_file)
             store['sweep_events'] = self.sweep_events

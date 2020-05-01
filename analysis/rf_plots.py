@@ -13,9 +13,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import h5py
 
-import analysis.stim_table as st
-from analysis import util
-import analysis.chi_square_lsn as chisq
+import oscopetools.stim_table as st
+from oscopetools import util
+import oscopetools.chi_square_lsn as chisq
 
 
 #%% CREATE STIM TABLES
