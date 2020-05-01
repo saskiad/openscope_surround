@@ -70,13 +70,13 @@ for specimen in os.listdir(DATA_PATH):
 
 PLOT_PATH = 'plots'
 
-for specimen in stim_stuff.keys():
-    for session in stim_stuff[specimen].keys():
+for specimen in list(stim_stuff.keys()):
+    for session in list(stim_stuff[specimen].keys()):
         # Skip is this session wasn't actually loaded above, or doesn't exist.
         try:
             stim_stuff[specimen][session]['tables']  # Check whether loaded.
             os.listdir(os.path.join(DATA_PATH, specimen, session))  # Check whether exists.
-        except KeyError, OSError:
+        except KeyError as OSError:
             continue
 
         tmp_stim_table = stim_stuff[specimen][session]['tables']['center_surround']
@@ -111,7 +111,7 @@ for specimen in stim_stuff.keys():
                 - tuning curve
             """
             for cell_no in range(roi_traces['data'].shape[0]):
-                print('Plotting roi no. {}'.format(cell_no))
+                print(('Plotting roi no. {}'.format(cell_no)))
                 plt.figure(figsize = (12, 6))
 
                 spec_outer = gs.GridSpec(3, 2, width_ratios = [3, 1])
@@ -149,7 +149,7 @@ for specimen in stim_stuff.keys():
                     ],
                 }
                 windows = {
-                    key: val.reset_index(drop = True) for key, val in windows.iteritems()
+                    key: val.reset_index(drop = True) for key, val in windows.items()
                 }
 
                 # Plot raw traces.
@@ -247,7 +247,7 @@ for specimen in stim_stuff.keys():
 
         #%% PLOT ALL TUNING CURVES
 
-        tuning_curves = {key: np.array(val) for key, val in tuning_curves.iteritems()}
+        tuning_curves = {key: np.array(val) for key, val in tuning_curves.items()}
 
         fig = plt.figure(figsize = (8, 8))
 

@@ -96,7 +96,7 @@ def content_rowmask(data, **filter_conds):
 
     """
     row_mask = np.ones(data.shape[0], dtype = np.bool)
-    for key, val in filter_conds.iteritems():
+    for key, val in filter_conds.items():
         row_mask = np.logical_and(row_mask, nanequal(data[key], val))
     return row_mask
 

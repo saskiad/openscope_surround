@@ -84,7 +84,7 @@ def get_all_data(path):
     
     #Save Data
     save_file = os.path.join(save_path, expt_name+'_'+srt(session_id)+'_data.h5')
-    print "Saving data to: ", save_file
+    print("Saving data to: ", save_file)
     store = pd.HDFStore(save_file)
     store['roi_table'] = roi_locations
     

@@ -13,7 +13,7 @@ Tango device for controlling the sync program.  Creates attributes for
 """
 
 import time
-import cPickle as pickle
+import pickle as pickle
 from shutil import copyfile
 import os
 
@@ -25,7 +25,7 @@ from PyTango import DevState, AttrWriteType
 from sync import Sync
 
 
-class SyncDevice(Device):
+class SyncDevice(Device, metaclass=DeviceMeta):
 
     """
     Tango Sync device class.
@@ -41,8 +41,6 @@ class SyncDevice(Device):
     >>> server_run((SyncDevice,))
 
     """
-
-    __metaclass__ = DeviceMeta
 
     time = attribute()  # read only is default
 

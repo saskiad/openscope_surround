@@ -10,8 +10,8 @@ import numpy as np
 import pandas as pd
 import h5py
 
-import cPickle as pickle
-from sync import Dataset
+import pickle as pickle
+from .sync import Dataset
 import tifffile as tiff
 import matplotlib.pyplot as plt
 
@@ -165,15 +165,15 @@ def plot_grid_response(mean_sweep_response,stim_table,exptpath):
         response_grid = np.add(response_grid,ori_responses) 
     
     plt.figure()
-    plt.imshow(response_grid,vmax=np.max(response_grid),vmin=-np.max(response_grid),cmap=u'bwr',interpolation='none',origin='lower')
+    plt.imshow(response_grid,vmax=np.max(response_grid),vmin=-np.max(response_grid),cmap='bwr',interpolation='none',origin='lower')
     plt.colorbar()
     plt.xlabel('X Pos')
     plt.ylabel('Y Pos')    
     
-    x_tick_labels = range(len(x_pos))
+    x_tick_labels = list(range(len(x_pos)))
     for i in range(len(x_pos)):
         x_tick_labels[i] = str(x_pos[i][0])
-    y_tick_labels = range(len(y_pos))
+    y_tick_labels = list(range(len(y_pos)))
     for i in range(len(y_pos)):
         y_tick_labels[i] = str(y_pos[i][0])
     plt.xticks(np.arange(len(x_pos)),x_tick_labels)
@@ -214,20 +214,20 @@ def get_wholefield_fluorescence(stim_table,im_filetype,im_directory,exp_date,mou
             for f in os.listdir(im_directory):
                 if f.endswith(im_filetype) and f.lower().find('local') == -1:
                     im_path = im_directory + f
-                    print im_path
+                    print(im_path)
         elif im_filetype=='h5':
             #find experiment directory:
             for f in os.listdir(im_directory):
                 if f.lower().find('ophys_experiment_')!=-1:
                     exp_path = im_directory+f+'\\'
                     session_ID = f[17:]
-                    print session_ID
+                    print(session_ID)
         else:
-            print 'im_filetype not recognized!'
+            print('im_filetype not recognized!')
             sys.exit(1)
                 
         if im_filetype=='nd2':
-            print 'Reading nd2...'
+            print('Reading nd2...')
             read_obj = nd2reader.Nd2(im_path)
             num_frames = len(read_obj.frames)
             avg_fluorescence = np.zeros((num_frames,))
@@ -242,7 +242,7 @@ def get_wholefield_fluorescence(stim_table,im_filetype,im_directory,exp_date,mou
                 frame_end = int(block[1])
                 for f in np.arange(frame_start,frame_end):
                     this_frame = read_obj.get_image(f,0,read_obj.channels[0],0)
-                    print 'Loaded frame ' + str(f) + ' of ' + str(num_frames)
+                    print('Loaded frame ' + str(f) + ' of ' + str(num_frames))
                     avg_fluorescence[f] = np.mean(this_frame)
         elif im_filetype=='h5':
             f = h5py.File(exp_path+session_ID+'.h5')
@@ -272,14 +272,14 @@ def create_stim_table(exptpath):
             if row.start >= display_sequence[seg,1]:
                 stimulus_table.start[index] = stimulus_table.start[index] - display_sequence[seg,1] + display_sequence[seg+1,0]
     stimulus_table.end = stimulus_table.start+stimulus_table.dif
-    print len(stimulus_table)
+    print(len(stimulus_table))
     stimulus_table = stimulus_table[stimulus_table.end <= display_sequence[-1,1]]
     stimulus_table = stimulus_table[stimulus_table.start <= display_sequence[-1,1]]            
-    print len(stimulus_table)
+    print(len(stimulus_table))
     sync_table = pd.DataFrame(np.column_stack((twop_frames[stimulus_table['start']],twop_frames[stimulus_table['end']])), columns=('Start', 'End'))
            
     #populate stimulus parameters
-    print data['stimuli'][0]['stim_path']
+    print(data['stimuli'][0]['stim_path'])
     
     #get center parameters
     sweep_order = data['stimuli'][0]['sweep_order']
@@ -314,14 +314,14 @@ def load_sync(exptpath):
         if f.endswith('_sync.h5'):
             syncpath = os.path.join(exptpath, f)
             syncMissing = False
-            print "Sync file:", f
+            print("Sync file:", f)
     if syncMissing:
-        print "No sync file"
+        print("No sync file")
         sys.exit()
 
     #load the sync data from .h5 and .pkl files
     d = Dataset(syncpath)
-    print d.line_labels
+    print(d.line_labels)
     #set the appropriate sample frequency
     sample_freq = d.meta_data['ni_daq']['counter_output_freq']
     
@@ -331,9 +331,9 @@ def load_sync(exptpath):
     stim_vsync_fall = d.get_falling_edges('stim_vsync')[1:]/sample_freq #eliminating the DAQ pulse   
     photodiode_rise = d.get_rising_edges('stim_photodiode')/sample_freq
     
-    print 'num stim vsyncs: ' + str(len(stim_vsync_fall))
-    print 'num 2p frames: ' + str(len(twop_vsync_fall))
-    print 'num photodiode flashes: ' + str(len(photodiode_rise))
+    print('num stim vsyncs: ' + str(len(stim_vsync_fall)))
+    print('num 2p frames: ' + str(len(twop_vsync_fall)))
+    print('num photodiode flashes: ' + str(len(photodiode_rise)))
 
     #make sure all of the sync data are available
     channels = {'twop_vsync_fall': twop_vsync_fall, 'stim_vsync_fall':stim_vsync_fall, 'photodiode_rise': photodiode_rise}
@@ -341,9 +341,9 @@ def load_sync(exptpath):
     for i in channels:
         channel_test.append(any(channels[i]))
     if all(channel_test):
-        print "All channels present."
+        print("All channels present.")
     else:
-        print "Not all channels present. Sync test failed."
+        print("Not all channels present. Sync test failed.")
         sys.exit()        
         
     #test and correct for photodiode transition errors
@@ -355,7 +355,7 @@ def load_sync(exptpath):
     #find three consecutive pulses at the start of session:
     two_back_lag = photodiode_rise[2:20] - photodiode_rise[:18]
     ptd_start = np.argmin(two_back_lag) + 3
-    print 'ptd_start: ' + str(ptd_start)
+    print('ptd_start: ' + str(ptd_start))
 
     #ptd_start = 3
     #for i in medium:
@@ -387,9 +387,9 @@ def load_sync(exptpath):
     # plt.title('photodiode end')
     # plt.show()
     
-    print 'ptd_start: ' + str(ptd_start)
+    print('ptd_start: ' + str(ptd_start))
     if ptd_start > 3:
-        print "Photodiode events before stimulus start.  Deleted."
+        print("Photodiode events before stimulus start.  Deleted.")
         
 #    ptd_errors = []
 #    while any(ptd_rise_diff[ptd_start:ptd_end] < 1.8):
@@ -428,7 +428,7 @@ def load_sync(exptpath):
 #    plt.show()
     
     delay = 0.0#init_delay 
-    print "monitor delay: " , delay
+    print("monitor delay: " , delay)
     
     #adjust stimulus time with monitor delay
     stim_time = stim_vsync_fall + delay
@@ -447,7 +447,7 @@ def load_sync(exptpath):
             break
             
     if acquisition_ends_early>0:
-        print "Acquisition ends before stimulus"   
+        print("Acquisition ends before stimulus")   
         
     return twop_frames, twop_vsync_fall, stim_vsync_fall, photodiode_rise
 
@@ -459,9 +459,9 @@ def load_pkl(exptpath):
         if f.endswith('.pkl'):
             logpath = os.path.join(exptpath, f)
             logMissing = False
-            print "Stimulus log:", f
+            print("Stimulus log:", f)
     if logMissing:
-        print "No pkl file"
+        print("No pkl file")
         sys.exit()
         
     #load data from pkl file

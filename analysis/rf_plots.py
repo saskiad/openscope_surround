@@ -33,7 +33,7 @@ for specimen in os.listdir(DATA_PATH):
         with util.gagProcess():
             try:
                 stim_stuff[specimen][session]['tables'] = st.create_stim_tables(tmp_path)
-                if 'center_surround' in stim_stuff[specimen][session]['tables'].keys():
+                if 'center_surround' in list(stim_stuff[specimen][session]['tables'].keys()):
                     util.populate_columns(
                         stim_stuff[specimen][session]['tables']['center_surround'],
                         inplace = True
@@ -53,9 +53,9 @@ experiments_df = pd.read_csv(os.path.join('analysis', 'manifest.csv'))
 
 PLOT_PATH = 'plots'  # Where to save output plots.
 
-for specimen in stim_stuff.keys():
-    for session in stim_stuff[specimen].keys():
-        print('Analyzing RFs for specimen {} session {}'.format(specimen, session))
+for specimen in list(stim_stuff.keys()):
+    for session in list(stim_stuff[specimen].keys()):
+        print(('Analyzing RFs for specimen {} session {}'.format(specimen, session)))
 
         # Ensure that current session has locally_sparse_noise.
         try:

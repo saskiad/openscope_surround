@@ -19,7 +19,7 @@ import numpy as np
 from toolbox.IO.nidaq import EventInput, CounterInputU32, CounterInputU64,\
     CounterOutputFreq, DigitalInput
 from toolbox.misc.timer import timeit
-from dataset import Dataset
+from .dataset import Dataset
 
 sync_version = 1.0
 
@@ -215,7 +215,7 @@ class Sync(object):
         """
 
         """
-        from dataset import dset_version
+        from .dataset import dset_version
         meta_data = {
             'ni_daq': {
                 'device': self.device,

@@ -10,7 +10,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from sync import Dataset
+from .sync import Dataset
 
 
 # Generic interface for creating stim tables. PREFERRED.
@@ -53,11 +53,11 @@ def create_stim_tables(
             )
         except KeyError:
             if verbose:
-                print(
+                print((
                     'Could not locate stimulus type {} in {}'.format(
                         stim_name, exptpath
                     )
-                )
+                ))
             continue
 
     return stim_table
@@ -118,9 +118,9 @@ def DGgrid_table(data, twop_frames, verbose = True):
     )
 
     if verbose:
-        print 'Found {} of {} expected sweeps.'.format(
+        print('Found {} of {} expected sweeps.'.format(
             actual_sweeps, expected_sweeps
-        )
+        ))
 
     stim_table = pd.DataFrame(
         np.column_stack((
@@ -148,9 +148,9 @@ def locally_sparse_noise_table(data, twop_frames, verbose = True):
         data, lsn_idx
     )
     if verbose:
-        print 'Found {} of {} expected sweeps.'.format(
+        print('Found {} of {} expected sweeps.'.format(
             actual_sweeps, expected_sweeps
-        )
+        ))
 
     stim_table = pd.DataFrame(
         np.column_stack((
@@ -176,9 +176,9 @@ def center_surround_table(data, twop_frames, verbose = True):
         data, center_idx
     )
     if verbose:
-        print 'Found {} of {} expected sweeps'.format(
+        print('Found {} of {} expected sweeps'.format(
             actual_sweeps, expected_sweeps
-        )
+        ))
 
     stim_table = pd.DataFrame(
         np.column_stack((
@@ -323,7 +323,7 @@ def load_stim(exptpath, verbose = True):
         if f.endswith('_stim.pkl'):
             pklpath = os.path.join(exptpath, f)
             if verbose:
-                print "Pkl file:", f
+                print("Pkl file:", f)
 
     if pklpath is None:
         raise IOError(
@@ -343,7 +343,7 @@ def load_sync(exptpath, verbose = True):
         if f.endswith('_sync.h5'):
             syncpath = os.path.join(exptpath, f)
             if verbose:
-                print "Sync file:", f
+                print("Sync file:", f)
     if syncpath is None:
         raise IOError(
             'No files with the suffix _sync.h5 were found in {}'.format(
@@ -370,13 +370,13 @@ def load_sync(exptpath, verbose = True):
         'photodiode_rise': photodiode_rise
     }
     channel_test = []
-    for chan in channels.keys():
+    for chan in list(channels.keys()):
         # Check that signal is high at least once in each channel.
         channel_test.append(any(channels[chan]))
     if not all(channel_test):
         raise RuntimeError('Not all channels present. Sync test failed.')
     elif verbose:
-        print "All channels present."
+        print("All channels present.")
 
     #test and correct for photodiode transition errors
     ptd_rise_diff = np.ediff1d(photodiode_rise)
@@ -389,13 +389,13 @@ def load_sync(exptpath, verbose = True):
     ptd_end = np.where(photodiode_rise > stim_vsync_fall.max())[0][0] - 1
 
     if ptd_start > 3 and verbose:
-        print 'ptd_start: ' + str(ptd_start)
-        print "Photodiode events before stimulus start.  Deleted."
+        print('ptd_start: ' + str(ptd_start))
+        print("Photodiode events before stimulus start.  Deleted.")
 
     ptd_errors = []
     while any(ptd_rise_diff[ptd_start:ptd_end] < 1.8):
         error_frames = np.where(ptd_rise_diff[ptd_start:ptd_end] < 1.8)[0] + ptd_start
-        print "Photodiode error detected. Number of frames:", len(error_frames)
+        print("Photodiode error detected. Number of frames:", len(error_frames))
         photodiode_rise = np.delete(photodiode_rise, error_frames[-1])
         ptd_errors.append(photodiode_rise[error_frames[-1]])
         ptd_end -= 1
@@ -410,7 +410,7 @@ def load_sync(exptpath, verbose = True):
 
     delay = np.mean(delay_rise[:-1])
     if verbose:
-        print "monitor delay: ", delay
+        print("monitor delay: ", delay)
 
     #adjust stimulus time to incorporate monitor delay
     stim_time = stim_vsync_fall + delay
@@ -453,18 +453,18 @@ def print_summary(stim_table):
     Print column names, number of 'unique' conditions per column (treating
     nans as equal), and average number of samples per condition.
     """
-    print(
+    print((
         '{:<20}{:>15}{:>15}\n'.format('Colname', 'No. conditions', 'Mean N/cond')
-    )
+    ))
     for colname in stim_table.columns:
         conditions, occurrences = np.unique(
             np.nan_to_num(stim_table[colname]), return_counts = True
         )
-        print(
+        print((
             '{:<20}{:>15}{:>15.1f}'.format(
                 colname, len(conditions), np.mean(occurrences)
             )
-        )
+        ))
 
 
 if __name__ == '__main__':

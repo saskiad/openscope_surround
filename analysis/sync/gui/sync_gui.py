@@ -8,11 +8,11 @@ Created on Oct 18, 2014
 import sys
 import os
 import datetime
-import cPickle as pickle
+import pickle as pickle
 
 from PyQt4 import QtCore, QtGui
 
-from sync_gui_layout import Ui_MainWindow
+from .sync_gui_layout import Ui_MainWindow
 from sync.sync import Sync
 from sync.dataset import Dataset
 
@@ -48,7 +48,7 @@ class MyForm(QtGui.QMainWindow):
         Sets up the tablewidget so that the numbering is 0:31
         """
         #set vertical labels to 0:31
-        labels_int = range(32)
+        labels_int = list(range(32))
         labels_str = [str(i) for i in labels_int]
         self.ui.tableWidget_labels.setVerticalHeaderLabels(labels_str)
         #set horizontal labels
