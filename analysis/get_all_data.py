@@ -11,7 +11,7 @@ import pandas as pd
 import json
 import h5py
 from PIL import Image
-from stim_table import create_stim_tables
+from stim_table import create_stim_tables, get_center_coordinates
 from RunningData import get_running_data
 
 def get_all_data(path_name, save_path, expt_name, row):
@@ -20,12 +20,14 @@ def get_all_data(path_name, save_path, expt_name, row):
     for f in os.listdir(path_name):
         if f.startswith('ophys_experiment'):
             expt_path = os.path.join(path_name, f)
+        elif f.startswith('eye_tracking'):
+            eye_path = os.path.join(path_name, f)
     for f in os.listdir(expt_path):
         if f.startswith('processed'):
             proc_path = os.path.join(expt_path, f)
-    for f in os.listdir(path_name):
-        if f.startswith('eye_tracking'):
-            eye_path = os.path.join(path_name, f)
+    for f in os.listdir(proc_path):
+        if f.startswith('ophys_cell_segmentation_run'):
+            roi_path = os.path.join(proc_path, f)
     
     #ROI table
     for fname in os.listdir(expt_path):
@@ -36,7 +38,7 @@ def get_all_data(path_name, save_path, expt_name, row):
                 f.close()
             break
     roi_locations = pd.DataFrame.from_dict(data = jin['rois'], orient='index')
-    roi_locations.drop(columns=['exclude_code','exclusion_labels','mask_page'], inplace=True) #remove columns I don't think we need
+    roi_locations.drop(columns=['exclude_code','exclusion_labels','mask_page'], inplace=True) #removing columns I don't think we need
     roi_locations.reset_index(inplace=True) 
     
     session_id = int(
@@ -60,7 +62,7 @@ def get_all_data(path_name, save_path, expt_name, row):
              raw_traces = f['data'][()]
              cell_ids = f['roi_names'][()].astype(str)
              f.close()
-    roi_locations['cell_id'] = cell_ids #TODO: is the order of cells the same in the dataframe as in the traces array?
+    roi_locations['cell_id'] = cell_ids #TODO: is the order of cells the same in the dataframe as in the traces array? NO!
     
     #eyetracking
     for fn in os.listdir(eye_path):
@@ -77,7 +79,10 @@ def get_all_data(path_name, save_path, expt_name, row):
     mp = Image.open(mp_path)
     mp_array = np.array(mp)
 
-    #ROI masks
+    #ROI masks outlines
+    boundary_path = os.path.join(roi_path, 'maxInt_boundary.png')
+    boundary = Image.open(boundary_path)
+    boundary_array = np.array(boundary)
     
     #stimulus table
     stim_table = create_stim_tables(path_name) #returns dictionary. Not sure how to save dictionary so pulling out each dataframe
@@ -97,6 +102,7 @@ def get_all_data(path_name, save_path, expt_name, row):
     meta_data['container_ID'] = row.Container_ID
     meta_data['session_ID'] = session_id
     meta_data['startdate'] = startdate
+    #TODO: add center coordinates for center-surround stimulus
     
     #Save Data
     save_file = os.path.join(save_path, expt_name+'_'+str(session_id)+'_data.h5')
@@ -113,8 +119,9 @@ def get_all_data(path_name, save_path, expt_name, row):
     dset2 = f.create_dataset('cell_ids', data=cell_ids)
     dset3 = f.create_dataset('pupil_area', data=pupil_area)
     dset4 = f.create_dataset('max_projection', data=mp_array)
-    dset5 = f.create_dataset('running_speed', data=dx)
-    dset6 = f.create_dataset('meta_data', data=str(meta_data))
+    dset5 = f.create_dataset('roi_outlines', data=boundary_array)
+    dset6 = f.create_dataset('running_speed', data=dx)
+    dset7 = f.create_dataset('meta_data', data=str(meta_data))
     f.close()
     
     

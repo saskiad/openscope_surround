@@ -3,6 +3,7 @@
 Created on Mon Apr 22 17:33:28 2019
 
 @author: danielm
+additions from saskiad Jun 7 2020
 """
 import os
 import warnings
@@ -18,7 +19,7 @@ from sync import Dataset
 def create_stim_tables(
     exptpath,
     stimulus_names = ['locally_sparse_noise',
-                      'center_surround', 'drifting_gratings_grid'],
+                      'center_surround', 'drifting_gratings_grid', 'drifting_gratings_size'],
     verbose = True):
     """Create a stim table from data located in folder exptpath.
 
@@ -45,7 +46,8 @@ def create_stim_tables(
     stim_table_funcs = {
         'locally_sparse_noise': locally_sparse_noise_table,
         'center_surround': center_surround_table,
-        'drifting_gratings_grid': DGgrid_table
+        'drifting_gratings_grid': DGgrid_table,
+        'drifting_gratings_size': DGsize_table
     }
     stim_table = {}
     for stim_name in stimulus_names:
@@ -135,6 +137,34 @@ def DGgrid_table(data, twop_frames, verbose = True):
     for attribute in ['TF', 'SF', 'Contrast', 'Ori', 'PosX', 'PosY']:
         stim_table[attribute] = get_attribute_by_sweep(
             data, DG_idx, attribute
+        )[:len(stim_table)]
+
+    return stim_table
+
+def DGsize_table(data, twop_frames, verbose = True):
+
+    DGs_idx = get_stimulus_index(data, 'drifting_gratings_size.stim')
+
+    timing_table, actual_sweeps, expected_sweeps = get_sweep_frames(
+        data, DGs_idx
+    )
+
+    if verbose:
+        print 'Found {} of {} expected sweeps.'.format(
+            actual_sweeps, expected_sweeps
+        )
+
+    stim_table = pd.DataFrame(
+        np.column_stack((
+            twop_frames[timing_table['start']],
+            twop_frames[timing_table['end']]
+        )),
+        columns=('Start', 'End')
+    )
+
+    for attribute in ['TF', 'SF', 'Contrast', 'Ori', 'Size']:
+        stim_table[attribute] = get_attribute_by_sweep(
+            data, DGs_idx, attribute
         )[:len(stim_table)]
 
     return stim_table
@@ -445,10 +475,11 @@ def load_sync(exptpath, verbose = True):
 
     return twop_frames, twop_vsync_fall, stim_vsync_fall, photodiode_rise
 
-def get_center_coordinates(data):
+def get_center_coordinates(data, idx):
 
-    center_idx = get_stimulus_index(data,'center')
-    stim_definition = data['stimuli'][center_idx]['stim']
+#    center_idx = get_stimulus_index(data,'center')
+#    stim_definition = data['stimuli'][center_idx]['stim']
+    stim_definition = data['stimuli'][idx]['stim']
 
     position_idx = stim_definition.find('pos=array(')
     coor_start = position_idx + stim_definition[position_idx:].find('[') + 1
@@ -483,6 +514,6 @@ def print_summary(stim_table):
 
 if __name__ == '__main__':
 #    exptpath = r'\\allen\programs\braintv\production\neuralcoding\prod55\specimen_859061987\ophys_session_882666374\\'
-    exptpath = r'/Volumes/New Volume/988763069'
+    exptpath = r'/Volumes/New Volume/994901365'
     stim_table = create_stim_tables(exptpath)
 #    stim_table = lsnCS_create_stim_table(exptpath)
