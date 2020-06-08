@@ -50,12 +50,11 @@ def get_metadata(file_path):
     return meta_data
 
 def get_roi_table(file_path):
-    rois = pd.read_hdf(file_path, 'roi_table')
-    return rois
+    return pd.read_hdf(file_path, 'roi_table')
 
 def get_stimulus_table(file_path, stimulus):
-    stim_table = pd.read_hdf(file_path, stimulus)
-    return stim_table
+    return pd.read_hdf(file_path, stimulus)
+
 
 def get_stimulus_epochs(file_path, session_type):
     if session_type=='drifting_gratings_grid':
@@ -86,9 +85,6 @@ def get_stimulus_epochs(file_path, session_type):
         
         
 
-def get_pupil_area(file_path):
+def get_eye_tracking(file_path):
+    return pd.read_hdf(file_path, 'eye_tracking')
     
-    return
-
-def get_pupil_position(file_path):
-    return

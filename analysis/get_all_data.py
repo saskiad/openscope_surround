@@ -38,7 +38,7 @@ def get_all_data(path_name, save_path, expt_name, row):
                 f.close()
             break
     roi_locations = pd.DataFrame.from_dict(data = jin['rois'], orient='index')
-    roi_locations.drop(columns=['exclude_code','exclusion_labels','mask_page'], inplace=True) #removing columns I don't think we need
+    roi_locations.drop(columns=['exclude_code','mask_page'], inplace=True) #removing columns I don't think we need
     roi_locations.reset_index(inplace=True) 
     
     session_id = int(
@@ -62,17 +62,47 @@ def get_all_data(path_name, save_path, expt_name, row):
              raw_traces = f['data'][()]
              cell_ids = f['roi_names'][()].astype(str)
              f.close()
-    roi_locations['cell_id'] = cell_ids #TODO: is the order of cells the same in the dataframe as in the traces array? NO!
+    roi_locations['cell_id'] = cell_ids 
     
     #eyetracking
+    eye_data = pd.DataFrame()
     for fn in os.listdir(eye_path):
-        if fn.endswith('eyetracking_dlc_to_screen_mapping.h5'):
+        if fn.endswith('ellipse.h5'):
             eye_file = os.path.join(eye_path, fn)
-    f = h5py.File(eye_file, 'r')
-    pupil_area = f['new_pupil_areas']['values'][()]
+        if fn.endswith('mapping.h5'):
+            dlc_file = os.path.join(eye_path, fn)
+    pupil_area = pd.read_hdf(dlc_file, 'raw_pupil_areas')
+    eye_area = pd.read_hdf(dlc_file, 'raw_eye_areas')
+    pos = pd.read_hdf(dlc_file, 'raw_screen_coordinates_spherical')
+   
+    ##temporal alignment
+    for f in os.listdir(expt_path):
+        if f.endswith('time_synchronization.h5'):
+            temporal_alignment_file = os.path.join(expt_path, f)           
+    f = h5py.File(temporal_alignment_file, 'r')
+    eye_frames = f['eye_tracking_alignment'].value
     f.close()
-    #TODO: get eye position
-    #TODO: temporal alignment
+    eye_frames = eye_frames.astype(int)
+    eye_frames = eye_frames[np.where(eye_frames>0)]
+    
+    eye_area_sync = eye_area[eye_frames]
+    pupil_area_sync = pupil_area[eye_frames]
+    x_pos_sync = pos.x_pos_deg.values[eye_frames]
+    y_pos_sync = pos.y_pos_deg.values[eye_frames]
+    
+    ##correcting dropped camera frames
+    test = eye_frames[np.isfinite(eye_frames)]
+    test = test.astype(int)
+    temp2 = np.bincount(test)
+    dropped_camera_frames = np.where(temp2>2)[0]    
+    for a in dropped_camera_frames:
+        null_2p_frames = np.where(eye_frames==a)[0]
+        eye_area_sync[null_2p_frames] = np.NaN
+        pupil_area_sync[null_2p_frames] = np.NaN
+        x_pos_sync[null_2p_frames] = np.NaN
+        y_pos_sync[null_2p_frames] = np.NaN
+    
+    eye_sync = pd.DataFrame(data=np.vstack((eye_area_sync, pupil_area_sync, x_pos_sync, y_pos_sync)).T, columns=('eye_area','pupil_area','x_pos_deg','y_pos_deg'))
     
     #max projection
     mp_path = os.path.join(proc_path, 'max_downsample_4Hz_0.png')
@@ -102,7 +132,6 @@ def get_all_data(path_name, save_path, expt_name, row):
     meta_data['container_ID'] = row.Container_ID
     meta_data['session_ID'] = session_id
     meta_data['startdate'] = startdate
-    #TODO: add center coordinates for center-surround stimulus
     
     #Save Data
     save_file = os.path.join(save_path, expt_name+'_'+str(session_id)+'_data.h5')
@@ -111,17 +140,17 @@ def get_all_data(path_name, save_path, expt_name, row):
     store['roi_table'] = roi_locations
     for key in stim_table.keys():
         store[key] = stim_table[key]
+    store['eye_tracking'] = eye_sync
             
     store.close()
     f = h5py.File(save_file, 'r+')
     dset = f.create_dataset('dff_traces', data=dff)
     dset1 = f.create_dataset('raw_traces', data=raw_traces)
     dset2 = f.create_dataset('cell_ids', data=cell_ids)
-    dset3 = f.create_dataset('pupil_area', data=pupil_area)
-    dset4 = f.create_dataset('max_projection', data=mp_array)
-    dset5 = f.create_dataset('roi_outlines', data=boundary_array)
-    dset6 = f.create_dataset('running_speed', data=dx)
-    dset7 = f.create_dataset('meta_data', data=str(meta_data))
+    dset3 = f.create_dataset('max_projection', data=mp_array)
+    dset4 = f.create_dataset('roi_outlines', data=boundary_array)
+    dset5 = f.create_dataset('running_speed', data=dx)
+    dset6 = f.create_dataset('meta_data', data=str(meta_data))
     f.close()
     
     
@@ -131,7 +160,7 @@ def get_all_data(path_name, save_path, expt_name, row):
 if __name__=='__main__':
     manifest = pd.read_csv(r'/Users/saskiad/Documents/Openscope/2019/Surround suppression/Final dataset/data manifest.csv')
     row = manifest.loc[27]
-    expt_id = row.Drifting_Gratings_Grid_Expt_ID
+    expt_id = row.Size_Tuning_Expt_ID
     path_name = os.path.join(r'/Volumes/New Volume', str(int(expt_id)))#975348996'
     expt_name = 'Multiplex'
     save_path = r'/Users/saskiad/Documents/Openscope/2019/Surround suppression/Final dataset'
