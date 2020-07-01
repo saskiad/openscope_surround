@@ -15,7 +15,7 @@ do.start()
 
 counter = 0
 counter_2 = 0
-print "Running..."
+print("Running...")
 while True:
     to_write = counter % 2
     do.writeBit(0, to_write)
@@ -25,9 +25,8 @@ while True:
         counter_2 += 1
     counter += 1
     if counter % 1000 == 0:
-        print counter
-    #time.sleep(0.1)
+        print(counter)
+    # time.sleep(0.1)
 
 do.stop()
 do.clear()
-

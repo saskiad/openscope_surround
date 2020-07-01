@@ -8,11 +8,11 @@ Created on Oct 18, 2014
 import sys
 import os
 import datetime
-import cPickle as pickle
+import pickle as pickle
 
 from PyQt4 import QtCore, QtGui
 
-from sync_gui_layout import Ui_MainWindow
+from .sync_gui_layout import Ui_MainWindow
 from sync.sync import Sync
 from sync.dataset import Dataset
 
@@ -27,6 +27,7 @@ class MyForm(QtGui.QMainWindow):
     Remembers state of all widgets between sessions.
 
     """
+
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.ui = Ui_MainWindow()
@@ -47,11 +48,11 @@ class MyForm(QtGui.QMainWindow):
         """
         Sets up the tablewidget so that the numbering is 0:31
         """
-        #set vertical labels to 0:31
-        labels_int = range(32)
+        # set vertical labels to 0:31
+        labels_int = list(range(32))
         labels_str = [str(i) for i in labels_int]
         self.ui.tableWidget_labels.setVerticalHeaderLabels(labels_str)
-        #set horizontal labels
+        # set horizontal labels
         self.ui.tableWidget_labels.setHorizontalHeaderLabels(['line         '])
 
     def _setup_buttons(self):
@@ -60,15 +61,19 @@ class MyForm(QtGui.QMainWindow):
         """
         self.ui.pushButton_start.clicked.connect(self._start_stop)
         self.ui.pushButton_start.setIcon(QtGui.QIcon("res/record.png"))
-        self.ui.lineEdit_pulse_freq.textChanged.connect(self._calculate_rollover)
-        self.ui.lineEdit_counter_bits.textChanged.connect(self._calculate_rollover)
+        self.ui.lineEdit_pulse_freq.textChanged.connect(
+            self._calculate_rollover
+        )
+        self.ui.lineEdit_counter_bits.textChanged.connect(
+            self._calculate_rollover
+        )
 
     def _start_stop(self):
         """
         Callback for start/stop button press.
         """
         if not self.running:
-            #get configuration from gui
+            # get configuration from gui
             self._start_session()
             self.running = True
             self._disable_ui()
@@ -116,7 +121,7 @@ class MyForm(QtGui.QMainWindow):
         pulse = str(self.ui.lineEdit_pulse_out.text())
         freq = float(str(self.ui.lineEdit_pulse_freq.text()))
 
-        #add labels
+        # add labels
         labels = self._getLabels()
 
         # #create Sync object
@@ -129,7 +134,7 @@ class MyForm(QtGui.QMainWindow):
             'event_bits': data_bits,
             'freq': freq,
             'labels': labels,
-            }
+        }
 
         self.sync = SyncObject(params=params)
         if self.sync_thread:
@@ -141,20 +146,26 @@ class MyForm(QtGui.QMainWindow):
 
         QtCore.QTimer.singleShot(100, self.sync.start)
 
-        self.ui.plainTextEdit.appendPlainText("***Starting session at \
-            %s on %s ***" % (str(now), device))
+        self.ui.plainTextEdit.appendPlainText(
+            "***Starting session at \
+            %s on %s ***"
+            % (str(now), device)
+        )
 
     def _stop_session(self):
         """
         Ends the session.
         """
         now = datetime.datetime.now()
-        #self.sync.clear()
+        # self.sync.clear()
         QtCore.QTimer.singleShot(100, self.sync.clear)
-        #self.sync = None
+        # self.sync = None
 
-        self.ui.plainTextEdit.appendPlainText("***Ending session at \
-            %s ***" % str(now))
+        self.ui.plainTextEdit.appendPlainText(
+            "***Ending session at \
+            %s ***"
+            % str(now)
+        )
 
     def _getLabels(self):
         """
@@ -203,12 +214,17 @@ class MyForm(QtGui.QMainWindow):
             self.ui.lineEdit_pulse_freq.setText(data['freq'])
             self.ui.checkBox_timestamp.setChecked(data['timestamp'])
             for index, label in enumerate(data['labels']):
-                self.ui.tableWidget_labels.setItem(index, 0,
-                    QtGui.QTableWidgetItem(label))
-            self.ui.plainTextEdit.appendPlainText("Loaded previous config successfully.")
+                self.ui.tableWidget_labels.setItem(
+                    index, 0, QtGui.QTableWidgetItem(label)
+                )
+            self.ui.plainTextEdit.appendPlainText(
+                "Loaded previous config successfully."
+            )
         except Exception as e:
             print(e)
-            self.ui.plainTextEdit.appendPlainText("Couldn't load previous session.  Using defaults.")
+            self.ui.plainTextEdit.appendPlainText(
+                "Couldn't load previous session.  Using defaults."
+            )
 
     def _calculate_rollover(self):
         """
@@ -222,7 +238,7 @@ class MyForm(QtGui.QMainWindow):
         if counter_bits == 32:
             freq = float(str(self.ui.lineEdit_pulse_freq.text()))
             try:
-                seconds = 4294967295/freq  # max unsigned
+                seconds = 4294967295 / freq  # max unsigned
                 timestr = str(datetime.timedelta(seconds=seconds))
             except:
                 timestr = "???"
@@ -252,16 +268,18 @@ class SyncObject(QtCore.QObject):
         self.params = params
 
     def start(self):
-        #create Sync object
-        self.sync = Sync(self.params['device'],
-                         self.params['counter'],
-                         self.params['pulse'],
-                         self.params['output_dir'],
-                         counter_bits=self.params['counter_bits'],
-                         event_bits=self.params['event_bits'],
-                         freq=self.params['freq'],
-                         verbose=True,
-                         force_sync_callback=False)
+        # create Sync object
+        self.sync = Sync(
+            self.params['device'],
+            self.params['counter'],
+            self.params['pulse'],
+            self.params['output_dir'],
+            counter_bits=self.params['counter_bits'],
+            event_bits=self.params['event_bits'],
+            freq=self.params['freq'],
+            verbose=True,
+            force_sync_callback=False,
+        )
 
         for i, label in enumerate(self.params['labels']):
             self.sync.add_label(i, label)

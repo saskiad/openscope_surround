@@ -36,7 +36,7 @@ def get_bit(uint_array, bit):
     """
     Returns a bool array for a specific bit in a uint ndarray.
     """
-    return np.bitwise_and(uint_array, 2**bit).astype(bool).astype(np.uint8)
+    return np.bitwise_and(uint_array, 2 ** bit).astype(bool).astype(np.uint8)
 
 
 class Dataset(object):
@@ -173,38 +173,38 @@ class Dataset(object):
         ##TODO: Split this up into smaller functions.
 
         """
-        #convert to bit
+        # convert to bit
         bit = self._line_to_bit(line)
 
-        #get the bit's data
+        # get the bit's data
         bit_data = self.get_bit(bit)
         total_data_points = len(bit_data)
 
-        #get the events
+        # get the events
         events = self.get_events_by_bit(bit)
         total_events = len(events)
 
-        #get the rising edges
+        # get the rising edges
         rising = self.get_rising_edges(bit)
         total_rising = len(rising)
 
-        #get falling edges
+        # get falling edges
         falling = self.get_falling_edges(bit)
         total_falling = len(falling)
 
         if total_events <= 0:
             if print_results:
-                print("*"*70)
-                print("No events on line: %s" % line)
-                print("*"*70)
+                print(("*" * 70))
+                print(("No events on line: %s" % line))
+                print(("*" * 70))
             return None
         elif total_events <= 10:
             if print_results:
-                print("*"*70)
-                print("Sparse events on line: %s" % line)
-                print("Rising: %s" % total_rising)
-                print("Falling: %s" % total_falling)
-                print("*"*70)
+                print(("*" * 70))
+                print(("Sparse events on line: %s" % line))
+                print(("Rising: %s" % total_rising))
+                print(("Falling: %s" % total_falling))
+                print(("*" * 70))
             return {
                 'line': line,
                 'bit': bit,
@@ -215,7 +215,7 @@ class Dataset(object):
             }
         else:
 
-            #period
+            # period
             period = self.period(line)
 
             avg_period = period['avg']
@@ -223,29 +223,29 @@ class Dataset(object):
             min_period = period['min']
             period_sd = period['sd']
 
-            #freq
+            # freq
             avg_freq = self.frequency(line)
 
-            #duty cycle
+            # duty cycle
             duty_cycle = self.duty_cycle(line)
 
             if print_results:
-                print("*"*70)
+                print(("*" * 70))
 
-                print("Quick stats for line: %s" % line)
-                print("Bit: %i" % bit)
-                print("Data points: %i" % total_data_points)
-                print("Total transitions: %i" % total_events)
-                print("Rising edges: %i" % total_rising)
-                print("Falling edges: %i" % total_falling)
-                print("Average period: %s" % avg_period)
-                print("Minimum period: %s" % min_period)
-                print("Max period: %s" % max_period)
-                print("Period SD: %s" % period_sd)
-                print("Average freq: %s" % avg_freq)
-                print("Duty cycle: %s" % duty_cycle)
+                print(("Quick stats for line: %s" % line))
+                print(("Bit: %i" % bit))
+                print(("Data points: %i" % total_data_points))
+                print(("Total transitions: %i" % total_events))
+                print(("Rising edges: %i" % total_rising))
+                print(("Falling edges: %i" % total_falling))
+                print(("Average period: %s" % avg_period))
+                print(("Minimum period: %s" % min_period))
+                print(("Max period: %s" % max_period))
+                print(("Period SD: %s" % period_sd))
+                print(("Average freq: %s" % avg_freq))
+                print(("Duty cycle: %s" % duty_cycle))
 
-                print("*"*70)
+                print(("*" * 70))
 
             return {
                 'line': line,
@@ -276,9 +276,9 @@ class Dataset(object):
         if len(edges) > 1:
 
             timebase_freq = self.meta_data['ni_daq']['counter_output_freq']
-            avg_period = np.mean(np.ediff1d(edges))/timebase_freq
-            max_period = np.max(np.ediff1d(edges))/timebase_freq
-            min_period = np.min(np.ediff1d(edges))/timebase_freq
+            avg_period = np.mean(np.ediff1d(edges)) / timebase_freq
+            max_period = np.max(np.ediff1d(edges)) / timebase_freq
+            min_period = np.min(np.ediff1d(edges)) / timebase_freq
             period_sd = np.std(avg_period)
 
         else:
@@ -297,7 +297,7 @@ class Dataset(object):
         """
 
         period = self.period(line, edge)
-        return 1.0/period['avg']
+        return 1.0 / period['avg']
 
     def duty_cycle(self, line):
         """
@@ -324,19 +324,18 @@ class Dataset(object):
             pass
 
         if rising[0] < falling[0]:
-            #line starts low
+            # line starts low
             high = falling - rising
         else:
-            #line starts high
-            high = np.concatenate(falling, self.get_all_events()[-1, 0]) - \
-                np.concatenate(0, rising)
+            # line starts high
+            high = np.concatenate(
+                falling, self.get_all_events()[-1, 0]
+            ) - np.concatenate(0, rising)
 
         total_high_time = np.sum(high)
         all_events = self.get_events_by_bit(bit)
-        total_time = all_events[-1]-all_events[0]
-        return 1.0*total_high_time/total_time
-
-
+        total_time = all_events[-1] - all_events[0]
+        return 1.0 * total_high_time / total_time
 
     def stats(self):
         """
@@ -347,16 +346,16 @@ class Dataset(object):
         for i in range(32):
             bits.append(self.line_stats(i, print_results=False))
         active_bits = [x for x in bits if x is not None]
-        print("Active bits: ", len(active_bits))
+        print(("Active bits: ", len(active_bits)))
         for bit in active_bits:
-            print("*"*70)
-            print("Bit: %i" % bit['bit'])
-            print("Label: %s" % self.line_labels[bit['bit']])
-            print("Rising edges: %i" % bit['total_rising'])
-            print("Falling edges: %i" % bit["total_falling"])
-            print("Average freq: %s" % bit['avg_freq'])
-            print("Duty cycle: %s" % bit['duty_cycle'])
-        print("*"*70)
+            print(("*" * 70))
+            print(("Bit: %i" % bit['bit']))
+            print(("Label: %s" % self.line_labels[bit['bit']]))
+            print(("Rising edges: %i" % bit['total_rising']))
+            print(("Falling edges: %i" % bit["total_falling"]))
+            print(("Average freq: %s" % bit['avg_freq']))
+            print(("Duty cycle: %s" % bit['duty_cycle']))
+        print(("*" * 70))
         return active_bits
 
     def plot_all(self):
@@ -367,6 +366,7 @@ class Dataset(object):
 
         """
         import matplotlib.pyplot as plt
+
         for bit in range(32):
             if len(self.get_events_by_bit(bit)) > 0:
                 data = self.get_bit(bit)
@@ -378,6 +378,7 @@ class Dataset(object):
         Plots a list of bits.
         """
         import matplotlib.pyplot as plt
+
         for bit in bits:
             data = self.get_bit(bit)
             plt.plot(data)
@@ -390,18 +391,17 @@ class Dataset(object):
         self.dfile.close()
 
 
-
 def main():
     path = r"\\aibsdata\mpe\CAM\testdata\test.h5"
     dset = Dataset(path)
 
-    #pprint.pprint(dset.meta_data)
+    # pprint.pprint(dset.meta_data)
 
     dset.stats()
 
-    #print dset.duty_cycle(2)
+    # print dset.duty_cycle(2)
 
-    #dset.plot_bits([2, 4])
+    # dset.plot_bits([2, 4])
 
 
 if __name__ == '__main__':

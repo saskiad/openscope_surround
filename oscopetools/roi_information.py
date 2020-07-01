@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Fri Jun 14 13:33:26 2019
@@ -34,8 +34,8 @@ def get_roi_information(storage_directory):
     """
     exp_path_head = storage_directory
 
-    #reformat path for mac with local access
-    #TODO: might need to adapt this when data is shared via DropBox
+    # reformat path for mac with local access
+    # TODO: might need to adapt this when data is shared via DropBox
     temp = exp_path_head.split('/')
     temp[1] = 'Volumes'
     exp_path_head = '/'.join(temp)
@@ -44,7 +44,7 @@ def get_roi_information(storage_directory):
     exp_path_files = os.listdir(exp_path_head)
     exp_folder_list = [i for i in exp_path_files if 'ophys_experiment' in i]
     if len(exp_folder_list) > 1:
-        raise Exception('Multiple experiment folders in '+exp_path_head)
+        raise Exception('Multiple experiment folders in ' + exp_path_head)
     else:
         exp_folder = exp_folder_list[0]
 
@@ -60,8 +60,8 @@ def get_roi_information(storage_directory):
 
     # Assemble DataFrame.
     roi_locations = pd.DataFrame.from_records(
-        data = jin['rois'],
-        columns = ['id', 'x', 'y', 'width', 'height', 'valid', 'mask']
+        data=jin['rois'],
+        columns=['id', 'x', 'y', 'width', 'height', 'valid', 'mask'],
     )
     roi_locations['session_id'] = int(
         exp_path_head.split('/')[-2].split('_')[-1]
