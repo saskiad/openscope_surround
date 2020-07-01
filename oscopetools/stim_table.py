@@ -3,12 +3,14 @@
 Created on Mon Apr 22 17:33:28 2019
 
 @author: danielm
+additions from saskiad Jun 7 2020
 """
 import os
 import warnings
 
 import numpy as np
 import pandas as pd
+import h5py
 
 from .sync import Dataset
 
@@ -20,6 +22,7 @@ def create_stim_tables(
         'locally_sparse_noise',
         'center_surround',
         'drifting_gratings_grid',
+        'drifting_gratings_size',
     ],
     verbose=True,
 ):
@@ -42,12 +45,14 @@ def create_stim_tables(
 
     """
     data = load_stim(exptpath)
-    twop_frames, _, _, _ = load_sync(exptpath)
+    #    twop_frames, _, _, _ = load_sync(exptpath)
+    twop_frames = load_alignment(exptpath)
 
     stim_table_funcs = {
         'locally_sparse_noise': locally_sparse_noise_table,
         'center_surround': center_surround_table,
         'drifting_gratings_grid': DGgrid_table,
+        'drifting_gratings_size': DGsize_table,
     }
     stim_table = {}
     for stim_name in stimulus_names:
@@ -117,7 +122,7 @@ def lsnCS_create_stim_table(exptpath):
 
 def DGgrid_table(data, twop_frames, verbose=True):
 
-    DG_idx = get_stimulus_index(data, 'grating')
+    DG_idx = get_stimulus_index(data, 'drifting_gratings_grid_5.stim')
 
     timing_table, actual_sweeps, expected_sweeps = get_sweep_frames(
         data, DG_idx
@@ -148,11 +153,44 @@ def DGgrid_table(data, twop_frames, verbose=True):
     return stim_table
 
 
+def DGsize_table(data, twop_frames, verbose=True):
+
+    DGs_idx = get_stimulus_index(data, 'drifting_gratings_size.stim')
+
+    timing_table, actual_sweeps, expected_sweeps = get_sweep_frames(
+        data, DGs_idx
+    )
+
+    if verbose:
+        print(
+            'Found {} of {} expected sweeps.'.format(
+                actual_sweeps, expected_sweeps
+            )
+        )
+
+    stim_table = pd.DataFrame(
+        np.column_stack(
+            (
+                twop_frames[timing_table['start']],
+                twop_frames[timing_table['end']],
+            )
+        ),
+        columns=('Start', 'End'),
+    )
+
+    for attribute in ['TF', 'SF', 'Contrast', 'Ori', 'Size']:
+        stim_table[attribute] = get_attribute_by_sweep(
+            data, DGs_idx, attribute
+        )[: len(stim_table)]
+
+    return stim_table
+
+
 def locally_sparse_noise_table(data, twop_frames, verbose=True):
     """Return stim table for locally sparse noise stimulus.
 
     """
-    lsn_idx = get_stimulus_index(data, 'locally_sparse_noise')
+    lsn_idx = get_stimulus_index(data, 'locally_sparse_noise.stim')
 
     timing_table, actual_sweeps, expected_sweeps = get_sweep_frames(
         data, lsn_idx
@@ -356,6 +394,19 @@ def load_stim(exptpath, verbose=True):
     return pd.read_pickle(pklpath)
 
 
+def load_alignment(exptpath):
+    for f in os.listdir(exptpath):
+        if f.startswith('ophys_experiment'):
+            ophys_path = os.path.join(exptpath, f)
+    for f in os.listdir(ophys_path):
+        if f.endswith('time_synchronization.h5'):
+            temporal_alignment_file = os.path.join(ophys_path, f)
+    f = h5py.File(temporal_alignment_file, 'r')
+    twop_frames = f['stimulus_alignment'].value
+    f.close()
+    return twop_frames
+
+
 def load_sync(exptpath, verbose=True):
 
     # verify that sync file exists in exptpath
@@ -463,10 +514,11 @@ def load_sync(exptpath, verbose=True):
     return twop_frames, twop_vsync_fall, stim_vsync_fall, photodiode_rise
 
 
-def get_center_coordinates(data):
+def get_center_coordinates(data, idx):
 
-    center_idx = get_stimulus_index(data, 'center')
-    stim_definition = data['stimuli'][center_idx]['stim']
+    #    center_idx = get_stimulus_index(data,'center')
+    #    stim_definition = data['stimuli'][center_idx]['stim']
+    stim_definition = data['stimuli'][idx]['stim']
 
     position_idx = stim_definition.find('pos=array(')
     coor_start = position_idx + stim_definition[position_idx:].find('[') + 1
@@ -507,5 +559,6 @@ def print_summary(stim_table):
 
 if __name__ == '__main__':
     #    exptpath = r'\\allen\programs\braintv\production\neuralcoding\prod55\specimen_859061987\ophys_session_882666374\\'
-    exptpath = r'/Volumes/My Passport/Openscope Multiplex/891653201'
-    stim_table = lsnCS_create_stim_table(exptpath)
+    exptpath = r'/Volumes/New Volume/994901365'
+    stim_table = create_stim_tables(exptpath)
+#    stim_table = lsnCS_create_stim_table(exptpath)
