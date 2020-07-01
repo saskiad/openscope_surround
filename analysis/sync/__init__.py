@@ -1,5 +1,5 @@
 #from sync import Sync
-from dataset import Dataset
+from .dataset import Dataset
 
 __version__ = 1.01
 

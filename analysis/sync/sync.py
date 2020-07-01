@@ -19,7 +19,7 @@ import numpy as np
 from toolbox.IO.nidaq import EventInput, CounterInputU32, CounterInputU64,\
     CounterOutputFreq, DigitalInput
 from toolbox.misc.timer import timeit
-from dataset import Dataset
+from .dataset import Dataset
 
 sync_version = 1.0
 
@@ -98,7 +98,7 @@ class Sync(object):
 
         # Configure Pulse Generator
         if self.verbose:
-            print("Counter input terminal", self.ci.getCountEdgesTerminal())
+            print(("Counter input terminal", self.ci.getCountEdgesTerminal()))
 
         self.co = CounterOutputFreq(device=device,
                                     counter=counter_output,
@@ -107,7 +107,7 @@ class Sync(object):
                                     duty_cycle=0.50,)
 
         if self.verbose:
-            print("Counter output terminal: ", self.co.getPulseTerminal())
+            print(("Counter output terminal: ", self.co.getPulseTerminal()))
 
         # Configure Event Input
         self.ei = EventInput(device=device,
@@ -201,21 +201,21 @@ class Sync(object):
         h5_output.create_dataset("meta", data=meta_data_np)
         h5_output.close()
         if self.verbose:
-            print("Recorded %i events." % len(data))
-            print("Metadata: %s" % meta_data)
-            print("Saving to %s" % filename)
+            print(("Recorded %i events." % len(data)))
+            print(("Metadata: %s" % meta_data))
+            print(("Saving to %s" % filename))
             try:
                 ds = Dataset(filename)
                 ds.stats()
                 ds.close()
             except Exception as e:
-                print("Failed to print quick stats: %s" % e)
+                print(("Failed to print quick stats: %s" % e))
 
     def _get_meta_data(self):
         """
 
         """
-        from dataset import dset_version
+        from .dataset import dset_version
         meta_data = {
             'ni_daq': {
                 'device': self.device,

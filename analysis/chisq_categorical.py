@@ -130,10 +130,10 @@ def stim_table_to_categories(stim_table,
         if np.any(matches_combination):
             sweep_categories[matches_combination] = category
             if verbose:
-                print 'Category ' + str(category)
+                print('Category ' + str(category))
                 for i_col,column in enumerate(columns):
                     param = unique_params[i_col][curr_combination[i_col]]
-                    print column + ': ' + str(param)
+                    print(column + ': ' + str(param))
             
             category+=1
               
@@ -143,7 +143,7 @@ def stim_table_to_categories(stim_table,
     
     if verbose:    
         blank_sweeps = sweep_categories==-1
-        print 'num blank: ' + str(blank_sweeps.sum())
+        print('num blank: ' + str(blank_sweeps.sum()))
         
     return sweep_categories
     

@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import os, h5py
 #import core
-from stim_table import *
+from .stim_table import *
 
 def do_sweep_mean(x):
     return x[28:35].mean()
@@ -61,7 +61,7 @@ response_off: mean response, s.e.m., and number of responsive trials for each bl
 
 
         '''
-        sweep_response = pd.DataFrame(index=self.stim_table.index.values, columns=np.array(range(self.numbercells)).astype(str))
+        sweep_response = pd.DataFrame(index=self.stim_table.index.values, columns=np.array(list(range(self.numbercells))).astype(str))
         
         for index,row in self.stim_table.iterrows():
             for nc in range(self.numbercells):
@@ -76,7 +76,7 @@ response_off: mean response, s.e.m., and number of responsive trials for each bl
 #        for i in range(10):
 #            shuffled_responses[:,:,i] = self.l0_events[:,idx+i]
 #        shuffled_mean = shuffled_responses.mean(axis=2)
-        sweep_p_values = pd.DataFrame(index = self.stim_table.index.values, columns=np.array(range(self.numbercells)).astype(str))
+        sweep_p_values = pd.DataFrame(index = self.stim_table.index.values, columns=np.array(list(range(self.numbercells))).astype(str))
 #        for nc in range(self.numbercells):
 #            subset = mean_sweep_events[str(nc)].values
 #            null_dist_mat = np.tile(shuffled_mean[nc,:], reps=(len(subset),1))
@@ -111,7 +111,7 @@ Returns
 -------
 peak dataframe
         '''
-        peak = pd.DataFrame(columns=('rf_on','rf_off'), index=range(self.numbercells))
+        peak = pd.DataFrame(columns=('rf_on','rf_off'), index=list(range(self.numbercells)))
         peak['rf_on'] = False
         peak['rf_off'] = False
         on_rfs = np.where(self.response_events_on[:,:,:,2]>0.25)[2]
@@ -122,7 +122,7 @@ peak dataframe
 
     def save_data(self):
         save_file = os.path.join(self.expt_path, str(self.session_id)+"_lsn_analysis.h5")
-        print "Saving data to: ", save_file
+        print("Saving data to: ", save_file)
         store = pd.HDFStore(save_file)
         store['sweep_response'] = self.sweep_events
         store['mean_sweep_response'] = self.mean_sweep_events

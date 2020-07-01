@@ -16,7 +16,7 @@ def make_targeted_manifest(savepath=r'/Volumes/programs/braintv/workgroups/nc-op
     cursor.execute("select ophys_sessions.date_of_acquisition, ophys_sessions.specimen_id, ophys_sessions.stimulus_name, ophys_sessions.storage_directory, ophys_sessions.id as ophys_session_id, projects.code as project_code, structures.acronym as targeted_structure, donors.name as donor_name, genotypes.name as genotype_name, imaging_depths.depth as imaging_depth from ophys_sessions join projects on ophys_sessions.project_id = projects.id join structures on ophys_sessions.targeted_structure_id = structures.id join specimens on ophys_sessions.specimen_id = specimens.id join donors on specimens.donor_id = donors.id join donors_genotypes on donors.id = donors_genotypes.donor_id join genotypes on donors_genotypes.genotype_id = genotypes.id join imaging_depths on ophys_sessions.imaging_depth_id = imaging_depths.id where projects.code ilike 'OpenscopeMultiplexPilot' and genotypes.name ilike '%cre%'")
     
     columns = [ d[0] for d in cursor.description ]
-    table = [ dict(zip(columns, c)) for c in cursor.fetchall() ]
+    table = [ dict(list(zip(columns, c))) for c in cursor.fetchall() ]
     
     conn.close()
     

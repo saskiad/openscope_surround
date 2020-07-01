@@ -11,8 +11,8 @@ import pandas as pd
 import json
 import h5py
 from PIL import Image
-from stim_table import create_stim_tables, get_center_coordinates
-from RunningData import get_running_data
+from .stim_table import create_stim_tables, get_center_coordinates
+from .RunningData import get_running_data
 
 def get_all_data(path_name, save_path, expt_name, row):
     
@@ -135,10 +135,10 @@ def get_all_data(path_name, save_path, expt_name, row):
     
     #Save Data
     save_file = os.path.join(save_path, expt_name+'_'+str(session_id)+'_data.h5')
-    print "Saving data to: ", save_file
+    print("Saving data to: ", save_file)
     store = pd.HDFStore(save_file)
     store['roi_table'] = roi_locations
-    for key in stim_table.keys():
+    for key in list(stim_table.keys()):
         store[key] = stim_table[key]
     store['eye_tracking'] = eye_sync
             

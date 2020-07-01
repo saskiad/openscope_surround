@@ -68,7 +68,7 @@ def chi_square_RFs(responses,LSN_template,num_shuffles=1000):
 
 def get_disc_masks(LSN_template,radius=3):
 
-    print 'Making exclusion region masks...'
+    print('Making exclusion region masks...')
 
     num_y = np.shape(LSN_template)[1]
     num_x = np.shape(LSN_template)[2]
@@ -108,14 +108,14 @@ def get_disc_masks(LSN_template,radius=3):
 
     masks = masks.reshape(num_y*num_x,num_y*num_x*2)
 
-    print 'Done.'
+    print('Done.')
 
     return masks
 
 
 def build_trial_matrix(LSN_template):
 
-    print 'Building trial matrix...'
+    print('Building trial matrix...')
 
     num_trials = np.shape(LSN_template)[0]
     num_y = np.shape(LSN_template)[1]
@@ -130,7 +130,7 @@ def build_trial_matrix(LSN_template):
                 frame = np.argwhere(LSN_template[:num_trials,y,x]==on_off_luminance[on_off])[:,0]
                 trial_mat[y,x,on_off,frame] = True
 
-    print 'Done.'
+    print('Done.')
 
     trials_per_pixel = np.sum(trial_mat,axis=3)
     trial_mat = trial_mat.reshape(num_y*num_x*2,num_trials)
@@ -203,7 +203,7 @@ def calc_observed(responses,trials,pixels,num_pixels):
 
         #show progress during shuffling
         if num_reps > 1:
-            print 'pixel ' + str(p) + ' of ' + str(len(pixels_to_populate))
+            print('pixel ' + str(p) + ' of ' + str(len(pixels_to_populate)))
 
     return observed_by_pixel
 

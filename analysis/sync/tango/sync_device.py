@@ -13,7 +13,7 @@ Tango device for controlling the sync program.  Creates attributes for
 """
 
 import time
-import cPickle as pickle
+import pickle as pickle
 from shutil import copyfile
 import os
 
@@ -25,7 +25,7 @@ from PyTango import DevState, AttrWriteType
 from sync import Sync
 
 
-class SyncDevice(Device):
+class SyncDevice(Device, metaclass=DeviceMeta):
 
     """
     Tango Sync device class.
@@ -41,8 +41,6 @@ class SyncDevice(Device):
     >>> server_run((SyncDevice,))
 
     """
-
-    __metaclass__ = DeviceMeta
 
     time = attribute()  # read only is default
 
@@ -164,7 +162,7 @@ class SyncDevice(Device):
 
     @command(dtype_in=str, dtype_out=None)
     def throw(self, msg):
-        print("Raising exception:", msg)
+        print(("Raising exception:", msg))
         #Send to error handler or sequencing engine
 
     @command(dtype_in=None, dtype_out=None)
@@ -211,7 +209,7 @@ class SyncDevice(Device):
         """
         Loads a configuration from a .pkl file.
         """
-        print("Loading configuration: %s" % path)
+        print(("Loading configuration: %s" % path))
 
         with open(path, 'rb') as f:
             config = pickle.load(f)
@@ -230,7 +228,7 @@ class SyncDevice(Device):
         """
         Saves a configuration to a .pkl file.
         """
-        print("Saving configuration: %s" % path)
+        print(("Saving configuration: %s" % path))
 
         config = {
             'device': self.attr_device,
