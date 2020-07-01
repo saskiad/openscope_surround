@@ -16,6 +16,7 @@ import pandas as pd
 
 #%% MISC
 
+
 class gagProcess(object):
     """Class to forcibly gag verbose methods.
 
@@ -35,6 +36,7 @@ class gagProcess(object):
 
 
 #%% UTILITIES FOR STIM_TABLES
+
 
 @np.vectorize
 def nanequal(a, b):
@@ -95,33 +97,32 @@ def content_rowmask(data, **filter_conds):
         True.
 
     """
-    row_mask = np.ones(data.shape[0], dtype = np.bool)
+    row_mask = np.ones(data.shape[0], dtype=np.bool)
     for key, val in filter_conds.items():
         row_mask = np.logical_and(row_mask, nanequal(data[key], val))
     return row_mask
 
 
-def populate_columns(data, Mean_Gray = True, No_Surround = True, Ortho = True, inplace = False):
+def populate_columns(
+    data, Mean_Gray=True, No_Surround=True, Ortho=True, inplace=False
+):
     if not inplace:
         data = copy.deepcopy(data)
 
     if Mean_Gray:
         data['Mean_Gray'] = np.logical_and(
-            np.isnan(data['Surround_Ori']),
-            np.isnan(data['Center_Ori'])
+            np.isnan(data['Surround_Ori']), np.isnan(data['Center_Ori'])
         )
     if No_Surround:
         data['No_Surround'] = np.logical_and(
-            np.isnan(data['Surround_Ori']),
-            ~np.isnan(data['Center_Ori'])
+            np.isnan(data['Surround_Ori']), ~np.isnan(data['Center_Ori'])
         )
     if Ortho:
         data['Ortho'] = np.logical_and(
             np.logical_and(~data['Mean_Gray'], ~data['No_Surround']),
             np.isclose(
-                np.abs(data['Center_Ori'] - data['Surround_Ori']) % 180.,
-                90.
-            )
+                np.abs(data['Center_Ori'] - data['Surround_Ori']) % 180.0, 90.0
+            ),
         )
 
     return data
@@ -129,7 +130,8 @@ def populate_columns(data, Mean_Gray = True, No_Surround = True, Ortho = True, i
 
 #%% UTILITIES FOR FINDING PATHS
 
-def find_by_suffix(directory, suffix, return_full = False):
+
+def find_by_suffix(directory, suffix, return_full=False):
     """Search for fnames with a matching suffix, returning first match.
 
     Inputs:
@@ -160,7 +162,7 @@ def find_by_suffix(directory, suffix, return_full = False):
         return None
 
 
-def find_by_prefix(directory, prefix, return_full = False):
+def find_by_prefix(directory, prefix, return_full=False):
     """Search for fnames with a matching prefix, returning first match.
 
     Inputs:
@@ -191,7 +193,7 @@ def find_by_prefix(directory, prefix, return_full = False):
         return None
 
 
-def find_anywhere(directory, pattern, return_full = False):
+def find_anywhere(directory, pattern, return_full=False):
     """Search for fnames containing pattern, returning first match.
 
     Inputs:

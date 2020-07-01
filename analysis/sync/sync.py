@@ -16,8 +16,13 @@ import time
 import h5py as h5
 import numpy as np
 
-from toolbox.IO.nidaq import EventInput, CounterInputU32, CounterInputU64,\
-    CounterOutputFreq, DigitalInput
+from toolbox.IO.nidaq import (
+    EventInput,
+    CounterInputU32,
+    CounterInputU64,
+    CounterOutputFreq,
+    DigitalInput,
+)
 from toolbox.misc.timer import timeit
 from .dataset import Dataset
 
@@ -60,17 +65,19 @@ class Sync(object):
     >>> s.clear()  # cannot be restarted
 
     """
-    def __init__(self,
-                 device,
-                 counter_input,
-                 counter_output,
-                 output_path,
-                 event_bits=32,
-                 counter_bits=32,
-                 freq=100000.0,
-                 verbose=False,
-                 force_sync_callback=False,
-                 ):
+
+    def __init__(
+        self,
+        device,
+        counter_input,
+        counter_output,
+        output_path,
+        event_bits=32,
+        counter_bits=32,
+        freq=100000.0,
+        verbose=False,
+        force_sync_callback=False,
+    ):
 
         self.device = device
         self.counter_input = counter_input
@@ -83,12 +90,10 @@ class Sync(object):
 
         # Configure input counter
         if self.counter_bits == 32:
-            self.ci = CounterInputU32(device=device,
-                                      counter=counter_input)
+            self.ci = CounterInputU32(device=device, counter=counter_input)
             callback = self._EventCallback32bit
         elif self.counter_bits == 64:
-            self.ci = CounterInputU64(device=device,
-                                      lsb_counter=counter_input,)
+            self.ci = CounterInputU64(device=device, lsb_counter=counter_input,)
             callback = self._EventCallback64bit
         else:
             raise ValueError("Counter can only be 32 or 64 bits.")
@@ -100,22 +105,26 @@ class Sync(object):
         if self.verbose:
             print(("Counter input terminal", self.ci.getCountEdgesTerminal()))
 
-        self.co = CounterOutputFreq(device=device,
-                                    counter=counter_output,
-                                    init_delay=0.0,
-                                    freq=freq,
-                                    duty_cycle=0.50,)
+        self.co = CounterOutputFreq(
+            device=device,
+            counter=counter_output,
+            init_delay=0.0,
+            freq=freq,
+            duty_cycle=0.50,
+        )
 
         if self.verbose:
             print(("Counter output terminal: ", self.co.getPulseTerminal()))
 
         # Configure Event Input
-        self.ei = EventInput(device=device,
-                             bits=self.event_bits,
-                             buffer_size=200,
-                             force_synchronous_callback=force_sync_callback,
-                             buffer_callback=callback,
-                             timeout=0.01,)
+        self.ei = EventInput(
+            device=device,
+            bits=self.event_bits,
+            buffer_size=200,
+            force_synchronous_callback=force_sync_callback,
+            buffer_callback=callback,
+            timeout=0.01,
+        )
 
         # Configure Optional Counters
         ## TODO: ADD THIS
@@ -141,7 +150,7 @@ class Sync(object):
 
         """
         self.start_time = str(datetime.datetime.now())  # get a timestamp
-        
+
         self.ci.start()
         self.co.start()
         self.ei.start()
@@ -183,11 +192,11 @@ class Sync(object):
         self._save_hdf5(out_file)
 
     def _save_hdf5(self, output_file_path=None):
-        #save sync data
+        # save sync data
         if output_file_path:
             filename = output_file_path
         else:
-            filename = self.output_path+".h5"
+            filename = self.output_path + ".h5"
         data = np.fromfile(self.output_path, dtype=np.uint32)
         if self.counter_bits == 32:
             data = data.reshape(-1, 2)
@@ -195,7 +204,7 @@ class Sync(object):
             data = data.reshape(-1, 3)
         h5_output = h5.File(filename, 'w')
         h5_output.create_dataset("data", data=data)
-        #save meta data
+        # save meta data
         meta_data = str(self._get_meta_data())
         meta_data_np = np.string_(meta_data)
         h5_output.create_dataset("meta", data=meta_data_np)
@@ -216,6 +225,7 @@ class Sync(object):
 
         """
         from .dataset import dset_version
+
         meta_data = {
             'ni_daq': {
                 'device': self.device,
@@ -229,14 +239,11 @@ class Sync(object):
             'stop_time': self.stop_time,
             'line_labels': self.line_labels,
             'timeouts': self.timeouts,
-            'version': {
-                'dataset': dset_version,
-                'sync': sync_version,
-            }
+            'version': {'dataset': dset_version, 'sync': sync_version,},
         }
         return meta_data
 
-    #@timeit
+    # @timeit
     def _EventCallback32bit(self, data):
         """
         Callback for change event.
@@ -246,7 +253,7 @@ class Sync(object):
         self.bin.write(np.ctypeslib.as_array(self.ci.read()))
         self.bin.write(np.ctypeslib.as_array(data))
 
-    #@timeit
+    # @timeit
     def _EventCallback64bit(self, data):
         """
         Callback for change event for 64-bit counter.
@@ -255,6 +262,7 @@ class Sync(object):
         self.bin.write(np.ctypeslib.as_array(lsb))
         self.bin.write(np.ctypeslib.as_array(msb))
         self.bin.write(np.ctypeslib.as_array(data))
+
 
 if __name__ == "__main__":
 
@@ -277,21 +285,48 @@ if __name__ == "__main__":
 
     """
 
-    parser = argparse.ArgumentParser(description=description,
-                        formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=description,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     parser.add_argument("output_path", type=str, help="output data path")
-    parser.add_argument("-d", "--device", type=str,
-                        help="NIDAQ Device to use.", default="Dev1")
-    parser.add_argument("-c", "--counter_bits", type=int, default=64,
-                        help="Counter timebase bits.")
-    parser.add_argument("-b", "--event_bits", type=int, default=32,
-                        help="Change detection bits.")
-    parser.add_argument("-v", "--verbose", action="store_true", default=False,
-                        help="Print a bunch of crap.")
-    parser.add_argument("-f", "--force", action="store_true",
-                        help="Force synchronous callbacks.")
-    parser.add_argument("-hz", "--frequency", type=float, default=10000000.0,
-                        help="Pulse (timebase) frequency.")
+    parser.add_argument(
+        "-d", "--device", type=str, help="NIDAQ Device to use.", default="Dev1"
+    )
+    parser.add_argument(
+        "-c",
+        "--counter_bits",
+        type=int,
+        default=64,
+        help="Counter timebase bits.",
+    )
+    parser.add_argument(
+        "-b",
+        "--event_bits",
+        type=int,
+        default=32,
+        help="Change detection bits.",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        default=False,
+        help="Print a bunch of crap.",
+    )
+    parser.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        help="Force synchronous callbacks.",
+    )
+    parser.add_argument(
+        "-hz",
+        "--frequency",
+        type=float,
+        default=10000000.0,
+        help="Pulse (timebase) frequency.",
+    )
 
     args = parser.parse_args()
 
@@ -305,7 +340,7 @@ if __name__ == "__main__":
 
     print("Starting task...")
 
-    #print(args.__dict__)
+    # print(args.__dict__)
 
     if force_sync_callback:
 
@@ -321,6 +356,7 @@ if __name__ == "__main__":
                 Thread for sync control.  We use Qt because it has a really
                 nice event loop.
             """
+
             cleared = QtCore.pyqtSignal()
 
             def __init__(self, parent=None, params={}):
@@ -328,16 +364,18 @@ if __name__ == "__main__":
                 self.params = params
 
             def start(self):
-                #create Sync objects
-                self.sync = Sync(device,
-                                 "ctr0",
-                                 "ctr2",
-                                 output_path,
-                                 counter_bits=counter_bits,
-                                 event_bits=event_bits,
-                                 freq=freq,
-                                 verbose=verbose,
-                                 force_sync_callback=True)
+                # create Sync objects
+                self.sync = Sync(
+                    device,
+                    "ctr0",
+                    "ctr2",
+                    output_path,
+                    counter_bits=counter_bits,
+                    event_bits=event_bits,
+                    freq=freq,
+                    verbose=verbose,
+                    force_sync_callback=True,
+                )
 
                 self.sync.start()
 
@@ -383,15 +421,17 @@ if __name__ == "__main__":
             In this mode, NIDAQmx creates and handles its own threading.
             It is unclear how/if this is better.
         """
-        sync = Sync(device,
-                    "ctr0",
-                    "ctr2",
-                    counter_bits=counter_bits,
-                    event_bits=event_bits,
-                    freq=freq,
-                    output_path=output_path,
-                    verbose=verbose,
-                    force_sync_callback=False)
+        sync = Sync(
+            device,
+            "ctr0",
+            "ctr2",
+            counter_bits=counter_bits,
+            event_bits=event_bits,
+            freq=freq,
+            output_path=output_path,
+            verbose=verbose,
+            force_sync_callback=False,
+        )
 
         def signal_handler(signal, frame):
             sync.clear()

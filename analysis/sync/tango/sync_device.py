@@ -44,44 +44,23 @@ class SyncDevice(Device, metaclass=DeviceMeta):
 
     time = attribute()  # read only is default
 
-    error_handler = attribute(
-        dtype=str,
-        access=AttrWriteType.READ_WRITE,
-        )
+    error_handler = attribute(dtype=str, access=AttrWriteType.READ_WRITE,)
 
-    device = attribute(
-        dtype=str,
-        access=AttrWriteType.READ_WRITE,
-        )
+    device = attribute(dtype=str, access=AttrWriteType.READ_WRITE,)
 
-    counter_input = attribute(
-        dtype=str,
-        access=AttrWriteType.READ_WRITE,
-        )
+    counter_input = attribute(dtype=str, access=AttrWriteType.READ_WRITE,)
 
-    counter_output = attribute(
-        dtype=str,
-        access=AttrWriteType.READ_WRITE,
-        )
+    counter_output = attribute(dtype=str, access=AttrWriteType.READ_WRITE,)
 
-    pulse_freq = attribute(
-        dtype=float,
-        access=AttrWriteType.READ_WRITE,
-        )
+    pulse_freq = attribute(dtype=float, access=AttrWriteType.READ_WRITE,)
 
-    output_path = attribute(
-        dtype=str,
-        access=AttrWriteType.READ_WRITE,
-        )
+    output_path = attribute(dtype=str, access=AttrWriteType.READ_WRITE,)
 
-    line_labels = attribute(
-        dtype=str,
-        access=AttrWriteType.READ_WRITE,
-        )
+    line_labels = attribute(dtype=str, access=AttrWriteType.READ_WRITE,)
 
-#------------------------------------------------------------------------------
-# INIT
-#------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------
+    # INIT
+    # ------------------------------------------------------------------------------
 
     def init_device(self):
         """
@@ -100,9 +79,9 @@ class SyncDevice(Device, metaclass=DeviceMeta):
         self.attr_line_labels = "[]"
         print("Device initialized...")
 
-#------------------------------------------------------------------------------
-# Attribute R/W
-#------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------
+    # Attribute R/W
+    # ------------------------------------------------------------------------------
 
     def read_time(self):
         return time.time()
@@ -149,9 +128,9 @@ class SyncDevice(Device, metaclass=DeviceMeta):
     def write_line_labels(self, data):
         self.attr_line_labels = data
 
-#------------------------------------------------------------------------------
-# Commands
-#------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------
+    # Commands
+    # ------------------------------------------------------------------------------
 
     @command(dtype_in=str, dtype_out=str)
     def echo(self, data):
@@ -163,7 +142,7 @@ class SyncDevice(Device, metaclass=DeviceMeta):
     @command(dtype_in=str, dtype_out=None)
     def throw(self, msg):
         print(("Raising exception:", msg))
-        #Send to error handler or sequencing engine
+        # Send to error handler or sequencing engine
 
     @command(dtype_in=None, dtype_out=None)
     def start(self):
@@ -172,16 +151,17 @@ class SyncDevice(Device, metaclass=DeviceMeta):
         """
         print("Starting experiment...")
 
-        self.sync = Sync(device=self.attr_device,
-                         counter_input=self.attr_counter_input,
-                         counter_output=self.attr_counter_output,
-                         counter_bits=self.attr_counter_bits,
-                         event_bits=self.attr_event_bits,
-                         output_path=self.attr_output_path,
-                         freq=self.attr_pulse_freq,
-                         verbose=True,
-                         force_sync_callback=False,
-                         )
+        self.sync = Sync(
+            device=self.attr_device,
+            counter_input=self.attr_counter_input,
+            counter_output=self.attr_counter_output,
+            counter_bits=self.attr_counter_bits,
+            event_bits=self.attr_event_bits,
+            output_path=self.attr_output_path,
+            freq=self.attr_pulse_freq,
+            verbose=True,
+            force_sync_callback=False,
+        )
 
         lines = eval(self.attr_line_labels)
         for index, line in enumerate(lines):
@@ -253,6 +233,7 @@ class SyncDevice(Device, metaclass=DeviceMeta):
         dest = os.path.join(folder, os.path.basename(source))
 
         copyfile(source, dest)
+
 
 if __name__ == "__main__":
     server_run((SyncDevice,))
