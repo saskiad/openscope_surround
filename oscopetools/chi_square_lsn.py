@@ -45,7 +45,9 @@ def chi_square_RFs(responses, LSN_template, num_shuffles=1000):
     ) * mean_events_per_trial.reshape(
         num_cells, 1, 1, 1
     )  # shape is (num_cells,num_y,num_x,2)
-    expected_by_pixel = expected_by_pixel.reshape(num_cells, num_y * num_x * 2, 1)
+    expected_by_pixel = expected_by_pixel.reshape(
+        num_cells, num_y * num_x * 2, 1
+    )
 
     # more convenient to keep cells as axis 0
     responses = responses.T
@@ -58,7 +60,9 @@ def chi_square_RFs(responses, LSN_template, num_shuffles=1000):
 
     # apply region masks around each pixel to sum pixel-wise chi contributions
     # to the chi_sum test statistic, then calculate p_values
-    p_values = chi_square_across_masks(masks, chi_actual, chi_shuffle, num_y, num_x)
+    p_values = chi_square_across_masks(
+        masks, chi_actual, chi_shuffle, num_y, num_x
+    )
 
     # p_values should be no smaller than the 1.0 over number of shuffles
     p_values = np.where(p_values == 0.0, 1.0 / num_shuffles, p_values)
@@ -92,7 +96,9 @@ def get_disc_masks(LSN_template, radius=3):
                 np.sum(LSN_binary[trials_not_gray, :, :], axis=0), on_trials
             )
 
-            center_y, center_x = np.unravel_index(raw_mask.argmax(), (num_y, num_x))
+            center_y, center_x = np.unravel_index(
+                raw_mask.argmax(), (num_y, num_x)
+            )
             raw_mask[center_y, center_x] = 0.0
 
             x_max = center_x + radius + 1
@@ -109,7 +115,9 @@ def get_disc_masks(LSN_template, radius=3):
                 y_min = 0
 
             clean_mask = np.ones(np.shape(raw_mask))
-            clean_mask[y_min:y_max, x_min:x_max] = raw_mask[y_min:y_max, x_min:x_max]
+            clean_mask[y_min:y_max, x_min:x_max] = raw_mask[
+                y_min:y_max, x_min:x_max
+            ]
 
             masks[y, x, :, :, :] = clean_mask.reshape(num_y, num_x, 1)
 

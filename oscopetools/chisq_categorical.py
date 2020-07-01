@@ -16,7 +16,9 @@ def chisq_from_stim_table(
     #  columns is a list of column names that define the categories (e.g. ['Ori','Contrast'])
     #  mean_sweep_events is a numpy array with shape (num_sweeps,num_cells)
 
-    sweep_categories = stim_table_to_categories(stim_table, columns, verbose=verbose)
+    sweep_categories = stim_table_to_categories(
+        stim_table, columns, verbose=verbose
+    )
     p_vals = compute_chi_shuffle(
         mean_sweep_events, sweep_categories, num_shuffles=num_shuffles
     )
@@ -61,7 +63,9 @@ def compute_chi_shuffle(mean_sweep_events, sweep_categories, num_shuffles=1000):
     return p_vals
 
 
-def compute_chi_from_blanks(mean_sweep_events, sweep_categories, num_shuffles=1000):
+def compute_chi_from_blanks(
+    mean_sweep_events, sweep_categories, num_shuffles=1000
+):
     #  mean_sweep_events is a numpy array with shape (num_sweeps,num_cells)
     #  sweep_conditions is a numpy array with shape (num_sweeps)
     #       sweep_conditions gives the category label for each sweep
@@ -72,7 +76,9 @@ def compute_chi_from_blanks(mean_sweep_events, sweep_categories, num_shuffles=10
 
     sweep_categories_dummy = make_category_dummy(sweep_categories)
 
-    expected = compute_expected_for_blank(mean_sweep_events, sweep_categories_dummy)
+    expected = compute_expected_for_blank(
+        mean_sweep_events, sweep_categories_dummy
+    )
     observed = compute_observed(mean_sweep_events, sweep_categories_dummy)
     chi_pos_actual, chi_neg_actual = compute_chi_rectified(observed, expected)
 
@@ -91,12 +97,18 @@ def compute_chi_from_blanks(mean_sweep_events, sweep_categories, num_shuffles=10
             shuffle_sweep_events, sweep_categories_dummy
         )
 
-        chi_pos, chi_neg = compute_chi_rectified(shuffle_observed, shuffle_expected)
+        chi_pos, chi_neg = compute_chi_rectified(
+            shuffle_observed, shuffle_expected
+        )
         chi_pos_shuffle[:, ns] = chi_pos
         chi_neg_shuffle[:, ns] = chi_neg
 
-    p_vals_pos = np.mean(chi_pos_actual.reshape(num_cells, 1) < chi_pos_shuffle, axis=1)
-    p_vals_neg = np.mean(chi_neg_actual.reshape(num_cells, 1) < chi_neg_shuffle, axis=1)
+    p_vals_pos = np.mean(
+        chi_pos_actual.reshape(num_cells, 1) < chi_pos_shuffle, axis=1
+    )
+    p_vals_neg = np.mean(
+        chi_neg_actual.reshape(num_cells, 1) < chi_neg_shuffle, axis=1
+    )
 
     return p_vals_pos, p_vals_neg
 
@@ -144,7 +156,9 @@ def stim_table_to_categories(stim_table, columns, verbose=False):
             category += 1
 
         # advance the combination
-        curr_combination = advance_combination(curr_combination, options_per_column)
+        curr_combination = advance_combination(
+            curr_combination, options_per_column
+        )
         all_tried = curr_combination[0] == options_per_column[0]
 
     if verbose:

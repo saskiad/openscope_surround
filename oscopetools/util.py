@@ -103,7 +103,9 @@ def content_rowmask(data, **filter_conds):
     return row_mask
 
 
-def populate_columns(data, Mean_Gray=True, No_Surround=True, Ortho=True, inplace=False):
+def populate_columns(
+    data, Mean_Gray=True, No_Surround=True, Ortho=True, inplace=False
+):
     if not inplace:
         data = copy.deepcopy(data)
 
@@ -118,7 +120,9 @@ def populate_columns(data, Mean_Gray=True, No_Surround=True, Ortho=True, inplace
     if Ortho:
         data['Ortho'] = np.logical_and(
             np.logical_and(~data['Mean_Gray'], ~data['No_Surround']),
-            np.isclose(np.abs(data['Center_Ori'] - data['Surround_Ori']) % 180.0, 90.0),
+            np.isclose(
+                np.abs(data['Center_Ori'] - data['Surround_Ori']) % 180.0, 90.0
+            ),
         )
 
     return data

@@ -52,7 +52,9 @@ def create_stim_tables(
     stim_table = {}
     for stim_name in stimulus_names:
         try:
-            stim_table[stim_name] = stim_table_funcs[stim_name](data, twop_frames)
+            stim_table[stim_name] = stim_table_funcs[stim_name](
+                data, twop_frames
+            )
         except KeyError:
             if verbose:
                 print(
@@ -82,7 +84,9 @@ def coarse_mapping_create_stim_table(exptpath):
     twop_frames, _, _, _ = load_sync(exptpath)
 
     stim_table = {}
-    stim_table['locally_sparse_noise'] = locally_sparse_noise_table(data, twop_frames)
+    stim_table['locally_sparse_noise'] = locally_sparse_noise_table(
+        data, twop_frames
+    )
     stim_table['drifting_gratings_grid'] = DGgrid_table(data, twop_frames)
 
     return stim_table
@@ -104,7 +108,9 @@ def lsnCS_create_stim_table(exptpath):
 
     stim_table = {}
     stim_table['center_surround'] = center_surround_table(data, twop_frames)
-    stim_table['locally_sparse_noise'] = locally_sparse_noise_table(data, twop_frames)
+    stim_table['locally_sparse_noise'] = locally_sparse_noise_table(
+        data, twop_frames
+    )
 
     return stim_table
 
@@ -113,14 +119,23 @@ def DGgrid_table(data, twop_frames, verbose=True):
 
     DG_idx = get_stimulus_index(data, 'grating')
 
-    timing_table, actual_sweeps, expected_sweeps = get_sweep_frames(data, DG_idx)
+    timing_table, actual_sweeps, expected_sweeps = get_sweep_frames(
+        data, DG_idx
+    )
 
     if verbose:
-        print('Found {} of {} expected sweeps.'.format(actual_sweeps, expected_sweeps))
+        print(
+            'Found {} of {} expected sweeps.'.format(
+                actual_sweeps, expected_sweeps
+            )
+        )
 
     stim_table = pd.DataFrame(
         np.column_stack(
-            (twop_frames[timing_table['start']], twop_frames[timing_table['end']])
+            (
+                twop_frames[timing_table['start']],
+                twop_frames[timing_table['end']],
+            )
         ),
         columns=('Start', 'End'),
     )
@@ -139,13 +154,22 @@ def locally_sparse_noise_table(data, twop_frames, verbose=True):
     """
     lsn_idx = get_stimulus_index(data, 'locally_sparse_noise')
 
-    timing_table, actual_sweeps, expected_sweeps = get_sweep_frames(data, lsn_idx)
+    timing_table, actual_sweeps, expected_sweeps = get_sweep_frames(
+        data, lsn_idx
+    )
     if verbose:
-        print('Found {} of {} expected sweeps.'.format(actual_sweeps, expected_sweeps))
+        print(
+            'Found {} of {} expected sweeps.'.format(
+                actual_sweeps, expected_sweeps
+            )
+        )
 
     stim_table = pd.DataFrame(
         np.column_stack(
-            (twop_frames[timing_table['start']], twop_frames[timing_table['end']])
+            (
+                twop_frames[timing_table['start']],
+                twop_frames[timing_table['end']],
+            )
         ),
         columns=('Start', 'End'),
     )
@@ -162,28 +186,37 @@ def center_surround_table(data, twop_frames, verbose=True):
     center_idx = get_stimulus_index(data, 'center')
     surround_idx = get_stimulus_index(data, 'surround')
 
-    timing_table, actual_sweeps, expected_sweeps = get_sweep_frames(data, center_idx)
+    timing_table, actual_sweeps, expected_sweeps = get_sweep_frames(
+        data, center_idx
+    )
     if verbose:
-        print('Found {} of {} expected sweeps'.format(actual_sweeps, expected_sweeps))
+        print(
+            'Found {} of {} expected sweeps'.format(
+                actual_sweeps, expected_sweeps
+            )
+        )
 
     stim_table = pd.DataFrame(
         np.column_stack(
-            (twop_frames[timing_table['start']], twop_frames[timing_table['end']])
+            (
+                twop_frames[timing_table['start']],
+                twop_frames[timing_table['end']],
+            )
         ),
         columns=('Start', 'End'),
     )
 
     # TODO: make this take either center or surround SF and TF depending on which is not NaN
     for attribute in ['TF', 'SF', 'Contrast']:
-        stim_table[attribute] = get_attribute_by_sweep(data, center_idx, attribute)[
-            : len(stim_table)
-        ]
+        stim_table[attribute] = get_attribute_by_sweep(
+            data, center_idx, attribute
+        )[: len(stim_table)]
     stim_table['Center_Ori'] = get_attribute_by_sweep(data, center_idx, 'Ori')[
         : len(stim_table)
     ]
-    stim_table['Surround_Ori'] = get_attribute_by_sweep(data, surround_idx, 'Ori')[
-        : len(stim_table)
-    ]
+    stim_table['Surround_Ori'] = get_attribute_by_sweep(
+        data, surround_idx, 'Ori'
+    )[: len(stim_table)]
 
     return stim_table
 
@@ -212,7 +245,9 @@ def get_stimulus_index(data, stim_name):
 
 def get_display_sequence(data, stimulus_idx):
 
-    display_sequence = np.array(data['stimuli'][stimulus_idx]['display_sequence'])
+    display_sequence = np.array(
+        data['stimuli'][stimulus_idx]['display_sequence']
+    )
     pre_blank_sec = int(data['pre_blank_sec'])
     display_sequence += pre_blank_sec
     display_sequence *= int(data['fps'])  # in stimulus frames
@@ -284,7 +319,9 @@ def get_attribute_idx(data, stimulus_idx, attribute):
             return attribute_idx
 
     raise KeyError(
-        'Attribute {} for stimulus_ids {} not found!'.format(attribute, stimulus_idx)
+        'Attribute {} for stimulus_ids {} not found!'.format(
+            attribute, stimulus_idx
+        )
     )
 
 
@@ -311,7 +348,9 @@ def load_stim(exptpath, verbose=True):
 
     if pklpath is None:
         raise IOError(
-            'No files with the suffix _stim.pkl were found in {}'.format(exptpath)
+            'No files with the suffix _stim.pkl were found in {}'.format(
+                exptpath
+            )
         )
 
     return pd.read_pickle(pklpath)
@@ -328,7 +367,9 @@ def load_sync(exptpath, verbose=True):
                 print("Sync file:", f)
     if syncpath is None:
         raise IOError(
-            'No files with the suffix _sync.h5 were found in {}'.format(exptpath)
+            'No files with the suffix _sync.h5 were found in {}'.format(
+                exptpath
+            )
         )
 
     # load the sync data from .h5 and .pkl files
@@ -362,8 +403,12 @@ def load_sync(exptpath, verbose=True):
 
     # test and correct for photodiode transition errors
     ptd_rise_diff = np.ediff1d(photodiode_rise)
-    short = np.where(np.logical_and(ptd_rise_diff > 0.1, ptd_rise_diff < 0.3))[0]
-    medium = np.where(np.logical_and(ptd_rise_diff > 0.5, ptd_rise_diff < 1.5))[0]
+    short = np.where(np.logical_and(ptd_rise_diff > 0.1, ptd_rise_diff < 0.3))[
+        0
+    ]
+    medium = np.where(np.logical_and(ptd_rise_diff > 0.5, ptd_rise_diff < 1.5))[
+        0
+    ]
     ptd_start = 3
     for i in medium:
         if set(range(i - 2, i)) <= set(short):
@@ -376,7 +421,9 @@ def load_sync(exptpath, verbose=True):
 
     ptd_errors = []
     while any(ptd_rise_diff[ptd_start:ptd_end] < 1.8):
-        error_frames = np.where(ptd_rise_diff[ptd_start:ptd_end] < 1.8)[0] + ptd_start
+        error_frames = (
+            np.where(ptd_rise_diff[ptd_start:ptd_end] < 1.8)[0] + ptd_start
+        )
         print("Photodiode error detected. Number of frames:", len(error_frames))
         photodiode_rise = np.delete(photodiode_rise, error_frames[-1])
         ptd_errors.append(photodiode_rise[error_frames[-1]])
@@ -387,7 +434,9 @@ def load_sync(exptpath, verbose=True):
     stim_on_photodiode_idx = 60 + 120 * np.arange(0, ptd_end - ptd_start, 1)
 
     stim_on_photodiode = stim_vsync_fall[stim_on_photodiode_idx]
-    photodiode_on = photodiode_rise[first_pulse + np.arange(0, ptd_end - ptd_start, 1)]
+    photodiode_on = photodiode_rise[
+        first_pulse + np.arange(0, ptd_end - ptd_start, 1)
+    ]
     delay_rise = photodiode_on - stim_on_photodiode
 
     delay = np.mean(delay_rise[:-1])
@@ -401,7 +450,9 @@ def load_sync(exptpath, verbose=True):
     twop_frames = np.empty((len(stim_time), 1))
     for i in range(len(stim_time)):
         # crossings = np.nonzero(np.ediff1d(np.sign(twop_vsync_fall - stim_time[i]))>0)
-        crossings = np.searchsorted(twop_vsync_fall, stim_time[i], side='left') - 1
+        crossings = (
+            np.searchsorted(twop_vsync_fall, stim_time[i], side='left') - 1
+        )
         if crossings < (len(twop_vsync_fall) - 1):
             twop_frames[i] = crossings
         else:
@@ -434,7 +485,13 @@ def print_summary(stim_table):
     Print column names, number of 'unique' conditions per column (treating
     nans as equal), and average number of samples per condition.
     """
-    print(('{:<20}{:>15}{:>15}\n'.format('Colname', 'No. conditions', 'Mean N/cond')))
+    print(
+        (
+            '{:<20}{:>15}{:>15}\n'.format(
+                'Colname', 'No. conditions', 'Mean N/cond'
+            )
+        )
+    )
     for colname in stim_table.columns:
         conditions, occurrences = np.unique(
             np.nan_to_num(stim_table[colname]), return_counts=True

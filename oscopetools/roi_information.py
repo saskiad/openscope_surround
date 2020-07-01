@@ -60,8 +60,11 @@ def get_roi_information(storage_directory):
 
     # Assemble DataFrame.
     roi_locations = pd.DataFrame.from_records(
-        data=jin['rois'], columns=['id', 'x', 'y', 'width', 'height', 'valid', 'mask']
+        data=jin['rois'],
+        columns=['id', 'x', 'y', 'width', 'height', 'valid', 'mask'],
     )
-    roi_locations['session_id'] = int(exp_path_head.split('/')[-2].split('_')[-1])
+    roi_locations['session_id'] = int(
+        exp_path_head.split('/')[-2].split('_')[-1]
+    )
 
     return roi_locations

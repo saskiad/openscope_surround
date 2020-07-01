@@ -35,7 +35,8 @@ def get_all_data(path):
                 f.close()
             break
     roi_locations = pd.DataFrame.from_records(
-        data=jin['rois'], columns=['id', 'x', 'y', 'width', 'height', 'valid', 'mask']
+        data=jin['rois'],
+        columns=['id', 'x', 'y', 'width', 'height', 'valid', 'mask'],
     )
     session_id = int(path_name.split('/')[-2].split('_')[-1])
     roi_locations['session_id'] = session_id
@@ -80,7 +81,9 @@ def get_all_data(path):
     # meta data
 
     # Save Data
-    save_file = os.path.join(save_path, expt_name + '_' + srt(session_id) + '_data.h5')
+    save_file = os.path.join(
+        save_path, expt_name + '_' + srt(session_id) + '_data.h5'
+    )
     print("Saving data to: ", save_file)
     store = pd.HDFStore(save_file)
     store['roi_table'] = roi_locations

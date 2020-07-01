@@ -12,6 +12,6 @@ setuptools.setup(
         'h5py',
         'pillow',
         'nd2reader',
-        'pg8000'
-    ]
+        'pg8000',
+    ],
 )

@@ -76,7 +76,9 @@ def write_text_file(best_location, save_name, savepath):
     f.close()
 
 
-def plot_sweep_response(sweep_response, stim_table, exp_date, mouse_ID, exptpath):
+def plot_sweep_response(
+    sweep_response, stim_table, exp_date, mouse_ID, exptpath
+):
 
     x_pos = np.unique(stim_table['PosX'].values)
     x_pos = x_pos[np.argwhere(np.isfinite(x_pos))]
@@ -133,17 +135,30 @@ def plot_sweep_response(sweep_response, stim_table, exp_date, mouse_ID, exptpath
                 position_average[(baseline_frames + 5) : (baseline_frames + 27)]
             )
             summed_response += np.max([0.0, position_response])
-            weighted_average[0] += x_pos[x][0] * np.max([0.0, position_response])
-            weighted_average[1] += y_pos[y][0] * np.max([0.0, position_response])
+            weighted_average[0] += x_pos[x][0] * np.max(
+                [0.0, position_response]
+            )
+            weighted_average[1] += y_pos[y][0] * np.max(
+                [0.0, position_response]
+            )
             this_ax.plot(position_average, linewidth=3.0, color='k')
-            this_ax.plot([baseline_frames, baseline_frames], [y_min, y_max], 'k--')
-            this_ax.set_title('X: ' + str(x_pos[x][0]) + ', Y: ' + str(y_pos[y][0]))
-    plt.savefig(exptpath + exp_date + '_' + mouse_ID + '_DGgrid_traces.png', dpi=300)
+            this_ax.plot(
+                [baseline_frames, baseline_frames], [y_min, y_max], 'k--'
+            )
+            this_ax.set_title(
+                'X: ' + str(x_pos[x][0]) + ', Y: ' + str(y_pos[y][0])
+            )
+    plt.savefig(
+        exptpath + exp_date + '_' + mouse_ID + '_DGgrid_traces.png', dpi=300
+    )
     plt.close()
 
     weighted_average = weighted_average / summed_response
 
-    best_location = (round(weighted_average[0], 1), round(weighted_average[1], 1))
+    best_location = (
+        round(weighted_average[0], 1),
+        round(weighted_average[1], 1),
+    )
 
     return best_location
 
@@ -171,9 +186,13 @@ def plot_grid_response(mean_sweep_response, stim_table, exptpath):
                     repetition_idx = repetition_idx[1:]
                 repetition_responses = np.zeros((len(repetition_idx),))
                 for rep in range(len(repetition_idx)):
-                    repetition_responses[rep] = mean_sweep_response[repetition_idx[rep]]
+                    repetition_responses[rep] = mean_sweep_response[
+                        repetition_idx[rep]
+                    ]
                 ori_responses[y, x] = np.mean(repetition_responses)
-        ori_responses = np.subtract(ori_responses, np.mean(ori_responses.flatten()))
+        ori_responses = np.subtract(
+            ori_responses, np.mean(ori_responses.flatten())
+        )
         response_grid = np.add(response_grid, ori_responses)
 
     plt.figure()
@@ -209,7 +228,9 @@ def get_mean_sweep_response(fluorescence, stim_table):
 
     num_stim_presentations = len(stim_table['Start'])
     mean_sweep_response = np.zeros((num_stim_presentations,))
-    sweep_response = np.zeros((num_stim_presentations, sweeplength + interlength))
+    sweep_response = np.zeros(
+        (num_stim_presentations, sweeplength + interlength)
+    )
     for i in range(num_stim_presentations):
         start = stim_table['Start'][i] - interlength
         end = stim_table['Start'][i] + sweeplength
@@ -279,7 +300,9 @@ def get_wholefield_fluorescence(
                 frame_start = int(block[0])
                 frame_end = int(block[1])
                 for f in np.arange(frame_start, frame_end):
-                    this_frame = read_obj.get_image(f, 0, read_obj.channels[0], 0)
+                    this_frame = read_obj.get_image(
+                        f, 0, read_obj.channels[0], 0
+                    )
                     print('Loaded frame ' + str(f) + ' of ' + str(num_frames))
                     avg_fluorescence[f] = np.mean(this_frame)
         elif im_filetype == 'h5':
@@ -288,7 +311,8 @@ def get_wholefield_fluorescence(
             avg_fluorescence = np.mean(data, axis=(1, 2))
             f.close()
         np.save(
-            savepath + exp_date + '_' + mouse_ID + '_wholefield.npy', avg_fluorescence
+            savepath + exp_date + '_' + mouse_ID + '_wholefield.npy',
+            avg_fluorescence,
         )
 
     return avg_fluorescence
@@ -298,7 +322,9 @@ def create_stim_table(exptpath):
 
     # load stimulus and sync data
     data = load_pkl(exptpath)
-    twop_frames, twop_vsync_fall, stim_vsync_fall, photodiode_rise = load_sync(exptpath)
+    twop_frames, twop_vsync_fall, stim_vsync_fall, photodiode_rise = load_sync(
+        exptpath
+    )
 
     display_sequence = data['stimuli'][0]['display_sequence']
     display_sequence += data['pre_blank_sec']
@@ -318,12 +344,19 @@ def create_stim_table(exptpath):
                 )
     stimulus_table.end = stimulus_table.start + stimulus_table.dif
     print(len(stimulus_table))
-    stimulus_table = stimulus_table[stimulus_table.end <= display_sequence[-1, 1]]
-    stimulus_table = stimulus_table[stimulus_table.start <= display_sequence[-1, 1]]
+    stimulus_table = stimulus_table[
+        stimulus_table.end <= display_sequence[-1, 1]
+    ]
+    stimulus_table = stimulus_table[
+        stimulus_table.start <= display_sequence[-1, 1]
+    ]
     print(len(stimulus_table))
     sync_table = pd.DataFrame(
         np.column_stack(
-            (twop_frames[stimulus_table['start']], twop_frames[stimulus_table['end']])
+            (
+                twop_frames[stimulus_table['start']],
+                twop_frames[stimulus_table['end']],
+            )
         ),
         columns=('Start', 'End'),
     )
@@ -346,15 +379,23 @@ def create_stim_table(exptpath):
     sync_table['PosX'] = np.NaN
     sync_table['PosY'] = np.NaN
     for index in np.arange(len(stimulus_table)):
-        if (not np.isnan(stimulus_table['end'][index])) & (sweep_order[index] >= 0):
+        if (not np.isnan(stimulus_table['end'][index])) & (
+            sweep_order[index] >= 0
+        ):
             sync_table['SF'][index] = sweep_table['SF'][int(sweep_order[index])]
             sync_table['TF'][index] = sweep_table['TF'][int(sweep_order[index])]
             sync_table['Contrast'][index] = sweep_table['Contrast'][
                 int(sweep_order[index])
             ]
-            sync_table['Ori'][index] = sweep_table['Ori'][int(sweep_order[index])]
-            sync_table['PosX'][index] = sweep_table['PosX'][int(sweep_order[index])]
-            sync_table['PosY'][index] = sweep_table['PosY'][int(sweep_order[index])]
+            sync_table['Ori'][index] = sweep_table['Ori'][
+                int(sweep_order[index])
+            ]
+            sync_table['PosX'][index] = sweep_table['PosX'][
+                int(sweep_order[index])
+            ]
+            sync_table['PosY'][index] = sweep_table['PosY'][
+                int(sweep_order[index])
+            ]
 
     return sync_table
 
@@ -407,8 +448,12 @@ def load_sync(exptpath):
 
     # test and correct for photodiode transition errors
     ptd_rise_diff = np.ediff1d(photodiode_rise)
-    short = np.where(np.logical_and(ptd_rise_diff > 0.1, ptd_rise_diff < 0.3))[0]
-    medium = np.where(np.logical_and(ptd_rise_diff > 0.5, ptd_rise_diff < 1.5))[0]
+    short = np.where(np.logical_and(ptd_rise_diff > 0.1, ptd_rise_diff < 0.3))[
+        0
+    ]
+    medium = np.where(np.logical_and(ptd_rise_diff > 0.5, ptd_rise_diff < 1.5))[
+        0
+    ]
 
     # find three consecutive pulses at the start of session:
     two_back_lag = photodiode_rise[2:20] - photodiode_rise[:18]
@@ -459,7 +504,9 @@ def load_sync(exptpath):
     #        ptd_rise_diff = np.ediff1d(photodiode_rise)
 
     first_pulse = ptd_start
-    stim_on_photodiode_idx = 60 + 120 * np.arange(0, ptd_end + 1 - ptd_start - 1, 1)
+    stim_on_photodiode_idx = 60 + 120 * np.arange(
+        0, ptd_end + 1 - ptd_start - 1, 1
+    )
 
     # stim_vsync_fall = stim_vsync_fall[0] + np.arange(stim_on_photodiode_idx.max()+481) * 0.0166666
 
@@ -496,7 +543,9 @@ def load_sync(exptpath):
     acquisition_ends_early = 0
     for i in range(len(stim_time)):
         # crossings = np.nonzero(np.ediff1d(np.sign(twop_vsync_fall - stim_time[i]))>0)
-        crossings = np.searchsorted(twop_vsync_fall, stim_time[i], side='left') - 1
+        crossings = (
+            np.searchsorted(twop_vsync_fall, stim_time[i], side='left') - 1
+        )
         if crossings < (len(twop_vsync_fall) - 1):
             twop_frames[i] = crossings
         else:

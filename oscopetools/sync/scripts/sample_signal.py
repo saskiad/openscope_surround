@@ -26,8 +26,7 @@ while True:
     counter += 1
     if counter % 1000 == 0:
         print(counter)
-    #time.sleep(0.1)
+    # time.sleep(0.1)
 
 do.stop()
 do.clear()
-

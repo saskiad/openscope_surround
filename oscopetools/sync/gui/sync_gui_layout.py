@@ -12,16 +12,23 @@ from PyQt4 import QtCore, QtGui
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
+
     def _fromUtf8(s):
         return s
 
+
 try:
     _encoding = QtGui.QApplication.UnicodeUTF8
+
     def _translate(context, text, disambig):
         return QtGui.QApplication.translate(context, text, disambig, _encoding)
+
+
 except AttributeError:
+
     def _translate(context, text, disambig):
         return QtGui.QApplication.translate(context, text, disambig)
+
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -36,7 +43,9 @@ class Ui_MainWindow(object):
         self.gridLayout = QtGui.QGridLayout(self.groupBox)
         self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
         self.lineEdit_counter_bits = QtGui.QLineEdit(self.groupBox)
-        self.lineEdit_counter_bits.setObjectName(_fromUtf8("lineEdit_counter_bits"))
+        self.lineEdit_counter_bits.setObjectName(
+            _fromUtf8("lineEdit_counter_bits")
+        )
         self.gridLayout.addWidget(self.lineEdit_counter_bits, 1, 1, 1, 1)
         self.label_6 = QtGui.QLabel(self.groupBox)
         self.label_6.setObjectName(_fromUtf8("label_6"))
@@ -45,7 +54,9 @@ class Ui_MainWindow(object):
         self.label.setObjectName(_fromUtf8("label"))
         self.gridLayout.addWidget(self.label, 0, 0, 1, 1)
         self.lineEdit_output_path = QtGui.QLineEdit(self.groupBox)
-        self.lineEdit_output_path.setObjectName(_fromUtf8("lineEdit_output_path"))
+        self.lineEdit_output_path.setObjectName(
+            _fromUtf8("lineEdit_output_path")
+        )
         self.gridLayout.addWidget(self.lineEdit_output_path, 0, 1, 1, 1)
         self.checkBox_timestamp = QtGui.QCheckBox(self.groupBox)
         self.checkBox_timestamp.setChecked(True)
@@ -80,11 +91,15 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.lineEdit_pulse_out, 6, 1, 1, 1)
         self.checkBox_aux_counter = QtGui.QCheckBox(self.groupBox)
         self.checkBox_aux_counter.setEnabled(False)
-        self.checkBox_aux_counter.setObjectName(_fromUtf8("checkBox_aux_counter"))
+        self.checkBox_aux_counter.setObjectName(
+            _fromUtf8("checkBox_aux_counter")
+        )
         self.gridLayout.addWidget(self.checkBox_aux_counter, 7, 0, 1, 1)
         self.lineEdit_aux_counter = QtGui.QLineEdit(self.groupBox)
         self.lineEdit_aux_counter.setEnabled(False)
-        self.lineEdit_aux_counter.setObjectName(_fromUtf8("lineEdit_aux_counter"))
+        self.lineEdit_aux_counter.setObjectName(
+            _fromUtf8("lineEdit_aux_counter")
+        )
         self.gridLayout.addWidget(self.lineEdit_aux_counter, 7, 1, 1, 1)
         self.label_data_bits = QtGui.QLabel(self.groupBox)
         self.label_data_bits.setObjectName(_fromUtf8("label_data_bits"))
@@ -132,10 +147,16 @@ class Ui_MainWindow(object):
         self.lineEdit_counter_bits.setText(_translate("MainWindow", "64", None))
         self.label_6.setText(_translate("MainWindow", "Counter Bits", None))
         self.label.setText(_translate("MainWindow", "Output path:", None))
-        self.lineEdit_output_path.setText(_translate("MainWindow", "C:/sync/output/test", None))
-        self.checkBox_timestamp.setText(_translate("MainWindow", "Timestamp", None))
+        self.lineEdit_output_path.setText(
+            _translate("MainWindow", "C:/sync/output/test", None)
+        )
+        self.checkBox_timestamp.setText(
+            _translate("MainWindow", "Timestamp", None)
+        )
         self.label_2.setText(_translate("MainWindow", "Pulse Freq (Hz):", None))
-        self.lineEdit_pulse_freq.setText(_translate("MainWindow", "100000.0", None))
+        self.lineEdit_pulse_freq.setText(
+            _translate("MainWindow", "100000.0", None)
+        )
         self.label_rollover.setText(_translate("MainWindow", "Rollover", None))
         self.label_5.setText(_translate("MainWindow", "Device:", None))
         self.lineEdit_device.setText(_translate("MainWindow", "Dev1", None))
@@ -143,7 +164,10 @@ class Ui_MainWindow(object):
         self.lineEdit_counter.setText(_translate("MainWindow", "ctr0", None))
         self.label_3.setText(_translate("MainWindow", "Pulse Out:", None))
         self.lineEdit_pulse_out.setText(_translate("MainWindow", "ctr2", None))
-        self.checkBox_aux_counter.setText(_translate("MainWindow", "Aux Counter", None))
-        self.label_data_bits.setText(_translate("MainWindow", "Data Bits", None))
+        self.checkBox_aux_counter.setText(
+            _translate("MainWindow", "Aux Counter", None)
+        )
+        self.label_data_bits.setText(
+            _translate("MainWindow", "Data Bits", None)
+        )
         self.lineEdit_data_bits.setText(_translate("MainWindow", "32", None))
-

@@ -111,9 +111,13 @@ response_off: mean response, s.e.m., and number of responsive trials for each bl
             for yp in range(y_shape):
                 on_frame = np.where(LSN[:, xp, yp] == 255)[0]
                 off_frame = np.where(LSN[:, xp, yp] == 0)[0]
-                subset_on = mean_sweep_response[self.stim_table.Frame.isin(on_frame)]
+                subset_on = mean_sweep_response[
+                    self.stim_table.Frame.isin(on_frame)
+                ]
                 #                subset_on_p = sweep_p_values[self.stim_table.frame.isin(on_frame)]
-                subset_off = mean_sweep_response[self.stim_table.Frame.isin(off_frame)]
+                subset_off = mean_sweep_response[
+                    self.stim_table.Frame.isin(off_frame)
+                ]
                 #                subset_off_p = sweep_p_values[self.stim_table.frame.isin(off_frame)]
                 response_on[xp, yp, :, 0] = subset_on.mean(axis=0)
                 response_on[xp, yp, :, 1] = subset_on.std(axis=0) / np.sqrt(
