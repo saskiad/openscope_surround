@@ -7,8 +7,10 @@ Created on Sat Jun  6 21:59:56 2020
 """
 from abc import ABC, abstractmethod
 from copy import deepcopy
+import warnings
 
 import matplotlib.pyplot as plt
+import seaborn as sns
 import h5py
 import pandas as pd
 import numpy as np
@@ -339,11 +341,22 @@ class EyeTracking(TimeseriesDataset):
         if channel in self._dframe.columns:
             ax.plot(self.time_vec, self._dframe[channel], **pltargs)
         elif channel == 'position':
-            ax.plot(
-                self._dframe[self._x_pos_name],
-                self._dframe[self._y_pos_name],
-                **pltargs
-            )
+            if pltargs.pop('style', None) in ['contour', 'density']:
+                x = self._dframe[self._x_pos_name]
+                y = self._dframe[self._y_pos_name]
+                mask = np.isnan(x) | np.isnan(y)
+                if any(mask):
+                    warnings.warn(
+                        'Dropping {} NaN entries in order to estimate '
+                        'density.'.format(sum(mask))
+                    )
+                sns.kdeplot(x[~mask], y[~mask], ax=ax, **pltargs)
+            else:
+                ax.plot(
+                    self._dframe[self._x_pos_name],
+                    self._dframe[self._y_pos_name],
+                    **pltargs
+                )
         else:
             raise NotImplementedError(
                 'Plotting for channel {} is not implemented.'.format(channel)
