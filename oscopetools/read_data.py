@@ -234,7 +234,7 @@ class TimeseriesDataset(Dataset):
         )
         return time_vec
 
-    def get_time_range(self, start: float, stop: float = None):
+    def get_time_range(self, start, stop=None):
         """Extract a time window from the timeseries by time in seconds.
 
         Parameters
@@ -259,7 +259,7 @@ class TimeseriesDataset(Dataset):
         return self.get_frame_range(*frame_range)
 
     @abstractmethod
-    def get_frame_range(self, start: int, stop: int = None):
+    def get_frame_range(self, start, stop=None):
         """Extract a time window from the timeseries by frame number.
 
         Parameters
@@ -278,7 +278,7 @@ class TimeseriesDataset(Dataset):
         """
         raise NotImplementedError
 
-    def _get_nearest_frame(self, time_: float):
+    def _get_nearest_frame(self, time_):
         """Round a timestamp to the nearest integer frame number."""
         if time_ <= 0.0:
             raise ValueError(
@@ -291,14 +291,256 @@ class TimeseriesDataset(Dataset):
         return min(frame_num, len(self) - 1)
 
 
+class SliceParseError(Exception):
+    pass
+
+
+class TrialDataset(Dataset):
+    """Abstract base class for datasets that are divided into trials.
+
+    All children should have a list-like `_trial_num` attribute.
+
+    """
+
+    @property
+    def num_trials(self):
+        """Number of trials."""
+        return len(self._trial_num)
+
+    @property
+    def trial_vec(self):
+        """Trial numbers."""
+        return self._trial_num
+
+    def get_trials(self, *args):
+        """Get a subset of the trials in TrialDataset.
+
+        Parameters
+        ----------
+        start, stop : int
+            Get a range of trials from `start` to an optional `stop`.
+        mask : bool vector-like
+            A boolean mask used to select trials.
+
+        Returns
+        -------
+        trial_subset : TrialDataset
+            A new `TrialDataset` object containing only the specified trials.
+
+        """
+        # Implementation note:
+        # This function tries to convert positional arguments to a boolean
+        # trial mask. `_get_trials_from_mask` is reponsible for actually
+        # getting the `trial_subset` to be returned.
+        try:
+            # Try to parse positional arguments as a range of trials
+            trial_range = self._try_parse_positionals_as_slice_like(*args)
+            mask = self._trial_range_to_mask(*trial_range)
+        except SliceParseError:
+            # Couldn't parse pos args as a range of trials. Try parsing as
+            # a boolean trial mask.
+            if len(args) == 1:
+                mask = self._validate_trial_mask_shape(args[0])
+            else:
+                raise ValueError(
+                    'Expected a single mask argument, got {}'.format(len(args))
+                )
+
+        return self._get_trials_from_mask(mask)
+
+    @abstractmethod
+    def _get_trials_from_mask(self, mask):
+        """Get a subset of trials using a boolean mask.
+
+        Subclasses are required to implement this method to get the rest of
+        TrialDataset functionality.
+
+        Parameters
+        ----------
+        mask : bool vector-like
+            A boolean trial mask, the length of which is guaranteed to match
+            the number of trials.
+
+        Returns
+        -------
+        trial_subset : TrialDataset
+            A new `TrialDataset` object containing only the specified trials.
+
+        """
+        raise NotImplementedError
+
+    def _try_parse_positionals_as_slice_like(self, *args):
+        if len(args) == 0:
+            # Case: Positional arguments are empty
+            raise ValueError('Empty positional arguments')
+        elif len(args) == 1:
+            # Case: Positional arguments contain a single element.
+            # If it's an integer, use that as the value for slice `start`
+            # If it's a tuple, try to use it as a `(start, stop)` pair
+            try:
+                # Check if args contains a single integer scalar
+                if int(args[0]) == args[0]:
+                    return args[0]
+                else:
+                    raise SliceParseError(
+                        'Positional argument {} is not int-like'.format(
+                            args[0]
+                        )
+                    )
+            except TypeError:
+                if (len(args[0]) == 1) or (len(args[0]) == 2):
+                    return args[0]
+                else:
+                    raise SliceParseError(
+                        'Found more than two elements in tuple {}'.format(
+                            args[0]
+                        )
+                    )
+        elif len(args) == 2:
+            return args
+        else:
+            raise SliceParseError
+
+    def _validate_trial_mask_shape(self, mask):
+        if np.ndim(mask) != 1:
+            raise ValueError(
+                'Expected mask to be vector-like, got '
+                '{}D array instead'.format(np.ndim(mask))
+            )
+
+        mask = np.asarray(mask).flatten()
+        if len(mask) != self.num_trials:
+            raise ValueError(
+                'len of mask {} does not match number of '
+                'trials {}'.format(len(mask), self.num_trials)
+            )
+
+        return mask
+
+    def _trial_range_to_mask(self, start, stop=None):
+        """Convert a range of trials to a boolean trial mask."""
+        mask = self.trial_vec >= start
+        if stop is not None:
+            mask &= self.trial_vec < stop
+        return mask
+
+
+class Fluorescence(TimeseriesDataset):
+    """A fluorescence timeseries.
+
+    Any fluorescence timeseries. May have one or more cells and one or more
+    trials.
+
+    """
+
+    @property
+    def num_timesteps(self):
+        """Number of timesteps."""
+        return self.fluo.shape[-1]
+
+    def get_frame_range(self, start, stop=None):
+        """Get a time window by frame number."""
+        fluo_copy = self.copy()
+
+        if stop is None:
+            time_slice = self.fluo[..., start][..., np.newaxis]
+        else:
+            time_slice = self.fluo[..., start:stop]
+
+        fluo_copy.fluo = time_slice
+        return fluo_copy
+
+    def _xticks_to_timestamps(self, ax):
+        xtick_locations = ax.get_xticks()
+        time_stamps = self.time_vec[np.round(xtick_locations).astype(int)]
+        ax.set_xticklabels(time_stamps)
+        ax.set_xlabel('Time (s)')
+
+
 class RawFluorescence(TimeseriesDataset):
-    pass
+    """Fluorescence timeseries from a full imaging session.
+
+    Not divided into trials.
+
+    """
+
+    def __init__(self, fluorescence_array):
+        fluorescence_array = np.asarray(fluorescence_array)
+        assert fluorescence_array.ndim() == 2
+
+        self.fluo = fluorescence_array
+        self.is_z_score = False
+        self.is_dff = False
+
+    def z_score(self):
+        """Convert to Z-score."""
+        if self.is_z_score:
+            raise ValueError('Instance is already a Z-score')
+        else:
+            z_score = self.fluo - self.fluo.mean(axis=1)[:, np.newaxis]
+            z_score /= z_score.std(axis=1)[:, np.newaxis]
+            self.fluo = z_score
+            self.is_z_score = True
+
+    def cut_by_trials(self, trial_times):
+        """Divide fluorescence traces up into equal-length trials.
+
+        Parameters
+        ----------
+        trial_times
+
+        Returns
+        -------
+        trial_fluorescence : TrialFluorescence
+
+        """
+        # TODO: divide up into trials
+        raise NotImplementedError
+
+    def plot(self, ax=None, **pltargs):
+        if ax is not None:
+            ax = plt.gca()
+
+        ax.imshow(self.fluo, **pltargs)
+        self._xticks_to_timestamps(ax)
+
+        return ax
+
+    def apply_quality_control(self, inplace=False):
+        raise NotImplementedError
 
 
-class DeltaFluorescence(TimeseriesDataset):
-    # This cannot be instantiated until all of the methods of its parents have
-    # been implemented.
-    pass
+class TrialFluorescence(TrialDataset, TimeseriesDataset):
+    """Fluorescence timeseries divided into trials."""
+
+    def __init__(self, fluorescence_array, trial_num):
+        fluorescence_array = np.asarray(fluorescence_array)
+        assert fluorescence_array.ndim() == 3
+        assert fluorescence_array.shape[0] == len(trial_num)
+
+        self.fluo = fluorescence_array
+        self._trial_num = trial_num
+        self.is_z_score = False
+        self.is_dff = False
+
+    def _get_trials_from_mask(self, mask):
+        trial_subset = self.copy()
+        trial_subset._trial_num = trial_subset._trial_num[mask]
+        trial_subset.fluo = trial_subset.fluo[mask, ...]
+
+        return trial_subset
+
+    def plot(self, ax=None, **pltargs):
+        if ax is None:
+            ax = plt.gca()
+
+        ax.imshow(self.fluo.mean(axis=0), **pltargs)
+        self._xticks_to_timestamps(ax)
+
+        return ax
+
+    def apply_quality_control(self, inplace=False):
+        raise NotImplementedError
 
 
 class EyeTracking(TimeseriesDataset):
