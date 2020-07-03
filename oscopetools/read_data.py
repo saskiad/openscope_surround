@@ -22,14 +22,22 @@ def get_dff_traces(file_path):
     f = h5py.File(file_path)
     dff = f['dff_traces'][()]
     f.close()
-    return dff
+
+    fluorescence_dataset = RawFluorescence(dff, 1.0 / FRAME_RATE)
+    fluorescence_dataset.is_dff = True
+
+    return fluorescence_dataset
 
 
 def get_raw_traces(file_path):
     f = h5py.File(file_path)
     raw = f['raw_traces'][()]
     f.close()
-    return raw
+
+    fluorescence_dataset = RawFluorescence(raw, 1.0 / FRAME_RATE)
+    fluorescence_dataset.is_dff = False
+
+    return fluorescence_dataset
 
 
 def get_running_speed(file_path):
@@ -457,16 +465,18 @@ class Fluorescence(TimeseriesDataset):
         ax.set_xlabel('Time (s)')
 
 
-class RawFluorescence(TimeseriesDataset):
+class RawFluorescence(Fluorescence):
     """Fluorescence timeseries from a full imaging session.
 
     Not divided into trials.
 
     """
 
-    def __init__(self, fluorescence_array):
+    def __init__(self, fluorescence_array, timestep_width):
         fluorescence_array = np.asarray(fluorescence_array)
         assert fluorescence_array.ndim() == 2
+
+        super().__init__(timestep_width)
 
         self.fluo = fluorescence_array
         self.is_z_score = False
@@ -510,13 +520,15 @@ class RawFluorescence(TimeseriesDataset):
         raise NotImplementedError
 
 
-class TrialFluorescence(TrialDataset, TimeseriesDataset):
+class TrialFluorescence(TrialDataset, Fluorescence):
     """Fluorescence timeseries divided into trials."""
 
-    def __init__(self, fluorescence_array, trial_num):
+    def __init__(self, fluorescence_array, trial_num, timestep_width):
         fluorescence_array = np.asarray(fluorescence_array)
         assert fluorescence_array.ndim() == 3
         assert fluorescence_array.shape[0] == len(trial_num)
+
+        self._timestep_width = timestep_width
 
         self.fluo = fluorescence_array
         self._trial_num = trial_num
