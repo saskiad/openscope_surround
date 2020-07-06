@@ -55,6 +55,9 @@ class _NamedOrderedSet(metaclass=_IterableNamedOrderedSet):
     def __repr__(self):
         return '_NamedOrderedSet({})'.format(self._member_value)
 
+    def __hash__(self):
+        return hash(self._member_value)
+
 
 class Orientation(_NamedOrderedSet):
     """Orientation of part of a CenterSurroundStimulus."""
@@ -355,3 +358,6 @@ class CenterSurroundStimulus:
             result = False
 
         return result
+
+    def __hash__(self):
+        return hash((value for value in self._stimulus_attributes.values()))
