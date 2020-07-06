@@ -271,7 +271,7 @@ class TrialDataset(Dataset):
             try:
                 # Check if args contains a single integer scalar
                 if int(args[0]) == args[0]:
-                    return args[0]
+                    return [args[0]]
                 else:
                     raise SliceParseError(
                         'Positional argument {} is not int-like'.format(
@@ -280,7 +280,7 @@ class TrialDataset(Dataset):
                     )
             except TypeError:
                 if (len(args[0]) == 1) or (len(args[0]) == 2):
-                    return args[0]
+                    return np.atleast_1d(args[0])
                 else:
                     raise SliceParseError(
                         'Found more than two elements in tuple {}'.format(
@@ -310,9 +310,11 @@ class TrialDataset(Dataset):
 
     def _trial_range_to_mask(self, start, stop=None):
         """Convert a range of trials to a boolean trial mask."""
-        mask = self.trial_vec >= start
         if stop is not None:
+            mask = self.trial_vec >= start
             mask &= self.trial_vec < stop
+        else:
+            mask = self.trial_vec == start
         return mask
 
 
@@ -346,12 +348,6 @@ class Fluorescence(TimeseriesDataset):
         fluo_copy.fluo = time_slice
         return fluo_copy
 
-    def _xticks_to_timestamps(self, ax):
-        xtick_locations = ax.get_xticks()
-        time_stamps = self.time_vec[np.round(xtick_locations).astype(int)]
-        ax.set_xticklabels(time_stamps)
-        ax.set_xlabel('Time (s)')
-
 
 class RawFluorescence(Fluorescence):
     """Fluorescence timeseries from a full imaging session.
@@ -362,7 +358,7 @@ class RawFluorescence(Fluorescence):
 
     def __init__(self, fluorescence_array, timestep_width):
         fluorescence_array = np.asarray(fluorescence_array)
-        assert fluorescence_array.ndim() == 2
+        assert fluorescence_array.ndim == 2
 
         super().__init__(timestep_width)
 
@@ -380,7 +376,7 @@ class RawFluorescence(Fluorescence):
             self.fluo = z_score
             self.is_z_score = True
 
-    def cut_by_trials(self, trial_timetable):
+    def cut_by_trials(self, trial_timetable, num_baseline_frames=None):
         """Divide fluorescence traces up into equal-length trials.
 
         Parameters
@@ -399,14 +395,28 @@ class RawFluorescence(Fluorescence):
                 'Could not find `Start` and `End` in trial_timetable.'
             )
 
+        if (num_baseline_frames is None) or (num_baseline_frames < 0):
+            num_baseline_frames = 0
+
         # Slice the RawFluorescence up into trials.
         trials = []
         num_frames = []
         for start, end in zip(
             trial_timetable['Start'], trial_timetable['End']
         ):
-            trials.append(self.get_frame_range(start, end))
-            num_frames = end - start
+            # Coerce `start` and `end` to ints if possible
+            if (int(start) != start) or (int(end) != end):
+                raise ValueError(
+                    'Expected trial start and end frame numbers'
+                    ' to be ints, got {} and {} instead'.format(
+                        start, end
+                    )
+                )
+            start = max(int(start) - num_baseline_frames, 0)
+            end = int(end)
+
+            trials.append(self.fluo[..., start:end])
+            num_frames.append(end - start)
 
         # Truncate all trials to the same length if necessary
         min_num_frames = min(num_frames)
@@ -418,7 +428,7 @@ class RawFluorescence(Fluorescence):
                 )
             )
             for i in range(len(trials)):
-                trials[i] = trials[i].get_frame_range(0, min_num_frames)
+                trials[i] = trials[i][..., :min_num_frames]
 
         # Try to get a vector of trial numbers
         try:
@@ -435,10 +445,13 @@ class RawFluorescence(Fluorescence):
 
         # Construct TrialFluorescence and return it.
         trial_fluorescence = TrialFluorescence(
-            np.array([tr.fluo for tr in trials]),
+            np.asarray(trials),
             trial_num,
             self.timestep_width,
         )
+        trial_fluorescence.is_z_score = self.is_z_score
+        trial_fluorescence.is_dff = self.is_dff
+        trial_fluorescence._baseline_duration = num_baseline_frames * self.timestep_width
 
         # Check that trial_fluorescence was constructed correctly.
         assert trial_fluorescence.num_cells == self.num_cells
@@ -452,7 +465,6 @@ class RawFluorescence(Fluorescence):
             ax = plt.gca()
 
         ax.imshow(self.fluo, **pltargs)
-        self._xticks_to_timestamps(ax)
 
         return ax
 
@@ -465,15 +477,21 @@ class TrialFluorescence(TrialDataset, Fluorescence):
 
     def __init__(self, fluorescence_array, trial_num, timestep_width):
         fluorescence_array = np.asarray(fluorescence_array)
-        assert fluorescence_array.ndim() == 3
+        assert fluorescence_array.ndim == 3
         assert fluorescence_array.shape[0] == len(trial_num)
 
         self._timestep_width = timestep_width
 
+        self._baseline_duration = 0
         self.fluo = fluorescence_array
-        self._trial_num = trial_num
+        self._trial_num = np.asarray(trial_num)
         self.is_z_score = False
         self.is_dff = False
+
+    @property
+    def time_vec(self):
+        time_vec_without_baseline = super().time_vec
+        return time_vec_without_baseline - self._baseline_duration
 
     def _get_trials_from_mask(self, mask):
         trial_subset = self.copy()
@@ -487,7 +505,6 @@ class TrialFluorescence(TrialDataset, Fluorescence):
             ax = plt.gca()
 
         ax.imshow(self.fluo.mean(axis=0), **pltargs)
-        self._xticks_to_timestamps(ax)
 
         return ax
 
