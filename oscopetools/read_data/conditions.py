@@ -29,7 +29,7 @@ class _NamedOrderedSet(metaclass=_IterableNamedOrderedSet):
     def __init__(self, member_value):
         if member_value in self._MEMBERS:
             self._member_value = member_value
-        elif np.isnan(member_value):
+        elif np.isnan(member_value) and (None in self._MEMBERS):
             self._member_value = None
         else:
             raise SetMembershipError(

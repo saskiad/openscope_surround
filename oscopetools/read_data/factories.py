@@ -153,20 +153,24 @@ def get_stimulus_table(file_path, stimulus):
             except SetMembershipError:
                 invalid_rows.append(ind)
 
-    if len(invalid_rows) > 0:
-        warnings.warn(
-            'Removed {} trials with invalid stimulus parameters: {}'.format(
-                len(invalid_rows), df.loc[invalid_rows, :]
+        if len(invalid_rows) > 0:
+            warnings.warn(
+                'Removed {} trials with invalid stimulus parameters: {}'.format(
+                    len(invalid_rows), df.loc[invalid_rows, :]
+                )
             )
+
+        print(len(center_surround_objects))
+        print(len(invalid_rows))
+        print(df.shape[0])
+        df.drop(index=invalid_rows, inplace=True)
+        df['center_surround'] = center_surround_objects
+        df.drop(
+            columns=['TF', 'SF', 'Contrast', 'Center_Ori', 'Surround_Ori'],
+            inplace=True,
         )
 
-    df['center_surround'] = center_surround_objects
-    df.drop(
-        columns=['TF', 'SF', 'Contrast', 'Center_Ori', 'Surround_Ori'],
-        inplace=True,
-    )
-
-    return pd.read_hdf(file_path, stimulus)
+    return df
 
 
 def get_stimulus_epochs(file_path, session_type):
