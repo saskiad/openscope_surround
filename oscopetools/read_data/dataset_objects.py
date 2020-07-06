@@ -329,6 +329,11 @@ class Fluorescence(TimeseriesDataset):
         """Number of timesteps."""
         return self.fluo.shape[-1]
 
+    @property
+    def num_cells(self):
+        """Number of ROIs."""
+        return self.fluo.shape[-2]
+
     def get_frame_range(self, start, stop=None):
         """Get a time window by frame number."""
         fluo_copy = self.copy()
@@ -375,20 +380,72 @@ class RawFluorescence(Fluorescence):
             self.fluo = z_score
             self.is_z_score = True
 
-    def cut_by_trials(self, trial_times):
+    def cut_by_trials(self, trial_timetable):
         """Divide fluorescence traces up into equal-length trials.
 
         Parameters
         ----------
-        trial_times
+        trial_timetable : pd.DataFrame-like
+            A DataFrame-like object with 'Start' and 'End' items for the start
+            and end frames of each trial, respectively.
 
         Returns
         -------
         trial_fluorescence : TrialFluorescence
 
         """
-        # TODO: divide up into trials
-        raise NotImplementedError
+        if ('Start' not in trial_timetable) or ('End' not in trial_timetable):
+            raise ValueError(
+                'Could not find `Start` and `End` in trial_timetable.'
+            )
+
+        # Slice the RawFluorescence up into trials.
+        trials = []
+        num_frames = []
+        for start, end in zip(
+            trial_timetable['Start'], trial_timetable['End']
+        ):
+            trials.append(self.get_frame_range(start, end))
+            num_frames = end - start
+
+        # Truncate all trials to the same length if necessary
+        min_num_frames = min(num_frames)
+        if not all([dur == min_num_frames for dur in num_frames]):
+            warnings.warn(
+                'Truncating all trials to shortest duration {} '
+                'frames (longest trial is {} frames)'.format(
+                    min_num_frames, max(num_frames)
+                )
+            )
+            for i in range(len(trials)):
+                trials[i] = trials[i].get_frame_range(0, min_num_frames)
+
+        # Try to get a vector of trial numbers
+        try:
+            trial_num = trial_timetable['trial_num']
+        except KeyError:
+            try:
+                trial_num = trial_timetable.index.tolist()
+            except AttributeError:
+                warnings.warn(
+                    'Could not get trial_num from trial_timetable. '
+                    'Falling back to arange.'
+                )
+                trial_num = np.arange(0, len(trials))
+
+        # Construct TrialFluorescence and return it.
+        trial_fluorescence = TrialFluorescence(
+            np.array([tr.fluo for tr in trials]),
+            trial_num,
+            self.timestep_width,
+        )
+
+        # Check that trial_fluorescence was constructed correctly.
+        assert trial_fluorescence.num_cells == self.num_cells
+        assert trial_fluorescence.num_timesteps == min_num_frames
+        assert trial_fluorescence.num_trials == len(trials)
+
+        return trial_fluorescence
 
     def plot(self, ax=None, **pltargs):
         if ax is not None:
