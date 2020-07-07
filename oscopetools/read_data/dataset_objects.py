@@ -338,15 +338,39 @@ class Fluorescence(TimeseriesDataset):
 
     def get_frame_range(self, start, stop=None):
         """Get a time window by frame number."""
-        fluo_copy = self.copy()
+        fluo_copy = self.copy(read_only=True)
 
         if stop is None:
             time_slice = self.fluo[..., start][..., np.newaxis]
         else:
             time_slice = self.fluo[..., start:stop]
 
-        fluo_copy.fluo = time_slice
+        fluo_copy.fluo = time_slice.copy()
         return fluo_copy
+
+    def copy(self, read_only=False):
+        """Get a deep copy.
+
+        Parameters
+        ----------
+        read_only : bool, default False
+            Whether to get a read-only copy of the underlying `fluo` array.
+            Getting a read-only copy is much faster and should be used if a
+            large number of copies need to be created.
+
+        """
+        if read_only:
+            # Get a read-only view of the fluo array
+            # This is much faster than creating a full copy
+            read_only_fluo = self.fluo.view()
+            read_only_fluo.flags.writeable = False
+
+            deepcopy_memo = {id(self.fluo): read_only_fluo}
+            copy_ = deepcopy(self, deepcopy_memo)
+        else:
+            copy_ = deepcopy(self)
+
+        return copy_
 
 
 class RawFluorescence(Fluorescence):
@@ -494,9 +518,9 @@ class TrialFluorescence(TrialDataset, Fluorescence):
         return time_vec_without_baseline - self._baseline_duration
 
     def _get_trials_from_mask(self, mask):
-        trial_subset = self.copy()
+        trial_subset = self.copy(read_only=True)
         trial_subset._trial_num = trial_subset._trial_num[mask]
-        trial_subset.fluo = trial_subset.fluo[mask, ...]
+        trial_subset.fluo = trial_subset.fluo[mask, ...].copy()
 
         return trial_subset
 
@@ -530,9 +554,9 @@ class EyeTracking(TimeseriesDataset):
     def get_frame_range(self, start: int, stop: int = None):
         window = self.copy()
         if stop is not None:
-            window._dframe = window._dframe.iloc[start:stop, :]
+            window._dframe = window._dframe.iloc[start:stop, :].copy()
         else:
-            window._dframe = window._dframe.iloc[start, :]
+            window._dframe = window._dframe.iloc[start, :].copy()
 
         return window
 
