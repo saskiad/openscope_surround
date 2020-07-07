@@ -1,0 +1,10 @@
+numpy>=1.18.5
+matplotlib>=3.2.1
+seaborn>=0.10.1
+pandas>=1.0.3
+tqdm>=4.45.0
+h5py>=2.10.0
+psychopy==2020.1.2
+pillow>=7.1.2
+pg8000>=1.15.2
+nd2reader>=3.2.1
