@@ -81,6 +81,9 @@ class Orientation(_NamedOrderedSet):
 
         super().__init__(member_value)
 
+    def __int__(self):
+        return int(self._member_value)
+
     def __lt__(self, other):
         other_as_ori = Orientation(other)
 
