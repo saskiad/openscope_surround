@@ -634,7 +634,26 @@ class TrialFluorescence(Fluorescence, TrialDataset):
         if ax is None:
             ax = plt.gca()
 
-        ax.imshow(self.trial_mean().fluo[0, ...], **pltargs)
+        if self.num_cells == 1:
+            # If there is only one cell, make a line plot
+            alpha = pltargs.pop('alpha', 1)
+
+            fluo_mean = self.trial_mean().fluo[0, 0, :]
+            fluo_std = self.trial_std().fluo[0, 0, :]
+            ax.fill_between(
+                self.time_vec,
+                fluo_mean - fluo_std,
+                fluo_mean + fluo_std,
+                label='Mean $\pm$ SD',
+                alpha=alpha * 0.6,
+                **pltargs
+            )
+            ax.plot(self.time_vec, fluo_mean, alpha=alpha, **pltargs)
+            ax.set_xlabel('Time (s)')
+            ax.legend()
+        else:
+            # If there are many cells, just show the mean as a matrix.
+            ax.imshow(self.trial_mean().fluo[0, ...], **pltargs)
 
         return ax
 
