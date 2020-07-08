@@ -11,6 +11,84 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
+class SliceParseError(Exception):
+    pass
+
+def _try_parse_positionals_as_slice_like(*args):
+    """Try to parse positional arguments as a slice-like int or pair of ints.
+
+    Output can be treated as a `(start, stop)` range (where `stop` is optional)
+    on success, and can be treated as a boolean mask if a `SliceParseError` is
+    raised.
+
+    Returns
+    -------
+    slice_like : [int] or [int, int]
+
+    Raises
+    ------
+    SliceParseError
+        If positional arguments are a boolean mask, not a slice.
+    TypeError
+        If positional arguments are not bool-like or int-like.
+    ValueError
+        If positional arguments are empty or have more than two entries.
+
+    """
+    flattened_args = np.asarray(args).flatten()
+    if len(flattened_args) == 0:
+        raise ValueError('Empty positional arguments')
+    elif _is_bool(flattened_args[0]):
+        raise SliceParseError('Cannot parse bool positionals as slice.')
+    elif int(flattened_args[0]) != flattened_args[0]:
+        raise TypeError(
+            'Expected positionals to be bool-like or int-like, '
+            'got type {} instead'.format(
+                flattened_args.dtype
+            )
+        )
+    elif (len(flattened_args) > 0) and (len(flattened_args) <= 2):
+        # Positional arguments are a valid slice-like int or pair of ints
+        return flattened_args.tolist()
+    else:
+        # Case: positionals are not bool and are of the wrong length
+        raise ValueError(
+            'Positionals of length {} cannot be parsed as slice-like'.format(
+                len(flattened_args)
+            )
+        )
+
+def _is_bool(x):
+    return isinstance(x, (bool, np.bool, np.bool8, np.bool_))
+
+
+def _validate_vector_mask_length(mask, expected_length):
+    if np.ndim(mask) != 1:
+        raise ValueError(
+            'Expected mask to be vector-like, got '
+            '{}D array instead'.format(np.ndim(mask))
+        )
+
+    mask = np.asarray(mask).flatten()
+    if len(mask) != expected_length:
+        raise ValueError(
+            'Expected mask of length {}, got mask of '
+            'length {} instead.'.format(len(mask), expected_length)
+        )
+
+    return mask
+
+
+def _get_vector_mask_from_range(values_to_mask, start, stop=None):
+    """Unmask all values within a range."""
+    if stop is not None:
+        mask = values_to_mask >= start
+        mask &= values_to_mask < stop
+    else:
+        mask = values_to_mask == start
+    return mask
+
+
 class Dataset(ABC):
     """A dataset that is interesting to analyze on its own."""
 
@@ -181,11 +259,6 @@ class TimeseriesDataset(Dataset):
 
         return min(frame_num, len(self) - 1)
 
-
-class SliceParseError(Exception):
-    pass
-
-
 class TrialDataset(Dataset):
     """Abstract base class for datasets that are divided into trials.
 
@@ -225,13 +298,13 @@ class TrialDataset(Dataset):
         # getting the `trial_subset` to be returned.
         try:
             # Try to parse positional arguments as a range of trials
-            trial_range = self._try_parse_positionals_as_slice_like(*args)
-            mask = self._trial_range_to_mask(*trial_range)
+            trial_range = _try_parse_positionals_as_slice_like(*args)
+            mask = _get_vector_mask_from_range(self.trial_vec, *trial_range)
         except SliceParseError:
             # Couldn't parse pos args as a range of trials. Try parsing as
             # a boolean trial mask.
             if len(args) == 1:
-                mask = self._validate_trial_mask_shape(args[0])
+                mask = _validate_vector_mask_length(args[0], self.num_trials)
             else:
                 raise ValueError(
                     'Expected a single mask argument, got {}'.format(len(args))
@@ -260,63 +333,6 @@ class TrialDataset(Dataset):
         """
         raise NotImplementedError
 
-    def _try_parse_positionals_as_slice_like(self, *args):
-        if len(args) == 0:
-            # Case: Positional arguments are empty
-            raise ValueError('Empty positional arguments')
-        elif len(args) == 1:
-            # Case: Positional arguments contain a single element.
-            # If it's an integer, use that as the value for slice `start`
-            # If it's a tuple, try to use it as a `(start, stop)` pair
-            try:
-                # Check if args contains a single integer scalar
-                if int(args[0]) == args[0]:
-                    return [args[0]]
-                else:
-                    raise SliceParseError(
-                        'Positional argument {} is not int-like'.format(
-                            args[0]
-                        )
-                    )
-            except TypeError:
-                if (len(args[0]) == 1) or (len(args[0]) == 2):
-                    return np.atleast_1d(args[0])
-                else:
-                    raise SliceParseError(
-                        'Found more than two elements in tuple {}'.format(
-                            args[0]
-                        )
-                    )
-        elif len(args) == 2:
-            return args
-        else:
-            raise SliceParseError
-
-    def _validate_trial_mask_shape(self, mask):
-        if np.ndim(mask) != 1:
-            raise ValueError(
-                'Expected mask to be vector-like, got '
-                '{}D array instead'.format(np.ndim(mask))
-            )
-
-        mask = np.asarray(mask).flatten()
-        if len(mask) != self.num_trials:
-            raise ValueError(
-                'len of mask {} does not match number of '
-                'trials {}'.format(len(mask), self.num_trials)
-            )
-
-        return mask
-
-    def _trial_range_to_mask(self, start, stop=None):
-        """Convert a range of trials to a boolean trial mask."""
-        if stop is not None:
-            mask = self.trial_vec >= start
-            mask &= self.trial_vec < stop
-        else:
-            mask = self.trial_vec == start
-        return mask
-
 
 class Fluorescence(TimeseriesDataset):
     """A fluorescence timeseries.
@@ -325,6 +341,14 @@ class Fluorescence(TimeseriesDataset):
     trials.
 
     """
+
+    def __init__(self, fluorescence_array, timestep_width):
+        super().__init__(timestep_width)
+
+        self.fluo = np.asarray(fluorescence_array)
+        self.cell_vec = np.arange(0, self.num_cells)
+        self.is_z_score = False
+        self.is_dff = False
 
     @property
     def num_timesteps(self):
@@ -335,6 +359,27 @@ class Fluorescence(TimeseriesDataset):
     def num_cells(self):
         """Number of ROIs."""
         return self.fluo.shape[-2]
+
+    def get_cells(self, *args):
+        # Implementation note:
+        # This function tries to convert positional arguments to a boolean
+        # cell mask. `_get_cells_from_mask` is reponsible for actually
+        # getting the `cell_subset` to be returned.
+        try:
+            # Try to parse positional arguments as a range of cells
+            cell_range = _try_parse_positionals_as_slice_like(*args)
+            mask = _get_vector_mask_from_range(self.cell_vec, *cell_range)
+        except SliceParseError:
+            # Couldn't parse pos args as a range of cells. Try parsing as
+            # a boolean cell mask.
+            if len(args) == 1:
+                mask = _validate_vector_mask_length(args[0], self.num_cells)
+            else:
+                raise ValueError(
+                    'Expected a single mask argument, got {}'.format(len(args))
+                )
+
+        return self._get_cells_from_mask(mask)
 
     def get_frame_range(self, start, stop=None):
         """Get a time window by frame number."""
@@ -372,6 +417,17 @@ class Fluorescence(TimeseriesDataset):
 
         return copy_
 
+    def _get_cells_from_mask(self, mask):
+        cell_subset = self.copy(read_only=False)
+        cell_subset.cell_vec = self.cell_vec[mask].copy()
+        cell_subset.fluo = self.fluo[..., mask, :].copy()
+
+        assert cell_subset.fluo.ndim == self.fluo.ndim
+        assert cell_subset.num_cells == np.sum(mask)
+
+        return cell_subset
+
+
 
 class RawFluorescence(Fluorescence):
     """Fluorescence timeseries from a full imaging session.
@@ -384,11 +440,7 @@ class RawFluorescence(Fluorescence):
         fluorescence_array = np.asarray(fluorescence_array)
         assert fluorescence_array.ndim == 2
 
-        super().__init__(timestep_width)
-
-        self.fluo = fluorescence_array
-        self.is_z_score = False
-        self.is_dff = False
+        super().__init__(fluorescence_array, timestep_width)
 
     def z_score(self):
         """Convert to Z-score."""
@@ -496,7 +548,7 @@ class RawFluorescence(Fluorescence):
         raise NotImplementedError
 
 
-class TrialFluorescence(TrialDataset, Fluorescence):
+class TrialFluorescence(Fluorescence, TrialDataset):
     """Fluorescence timeseries divided into trials."""
 
     def __init__(self, fluorescence_array, trial_num, timestep_width):
@@ -504,13 +556,10 @@ class TrialFluorescence(TrialDataset, Fluorescence):
         assert fluorescence_array.ndim == 3
         assert fluorescence_array.shape[0] == len(trial_num)
 
-        self._timestep_width = timestep_width
+        super().__init__(fluorescence_array, timestep_width)
 
         self._baseline_duration = 0
-        self.fluo = fluorescence_array
         self._trial_num = np.asarray(trial_num)
-        self.is_z_score = False
-        self.is_dff = False
 
     @property
     def time_vec(self):
@@ -519,7 +568,7 @@ class TrialFluorescence(TrialDataset, Fluorescence):
 
     def _get_trials_from_mask(self, mask):
         trial_subset = self.copy(read_only=True)
-        trial_subset._trial_num = trial_subset._trial_num[mask]
+        trial_subset._trial_num = trial_subset._trial_num[mask].copy()
         trial_subset.fluo = trial_subset.fluo[mask, ...].copy()
 
         return trial_subset
