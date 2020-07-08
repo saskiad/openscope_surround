@@ -18,6 +18,9 @@ class _IterableNamedOrderedSet(type):
         for member in cls._MEMBERS:
             yield cls(member)
 
+    def __len__(cls):
+        return len(cls._MEMBERS)
+
 
 class SetMembershipError(Exception):
     pass
