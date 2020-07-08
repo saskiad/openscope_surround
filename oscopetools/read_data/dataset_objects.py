@@ -313,6 +313,27 @@ class TrialDataset(Dataset):
 
         return self._get_trials_from_mask(mask)
 
+    def iter_trials(self):
+        """Get an iterator over all trials.
+
+        Yields
+        ------
+        (trial_num, trial_contents): (int, TrialDataset)
+            Yields a tuple containing the trial number and a `TrialDataset`
+            containing that trial for each trial in the original
+            `TrialDataset`.
+
+        Example
+        -------
+        >>> trials = TrialDataset()
+        >>> for trial_num, trial in trials.iter_trials():
+        >>>     print(trial_num)
+        >>>     trial.plot()
+
+        """
+        for trial_num in self.trial_vec:
+            yield (trial_num, self.get_trials(trial_num))
+
     @abstractmethod
     def _get_trials_from_mask(self, mask):
         """Get a subset of trials using a boolean mask.
@@ -407,6 +428,25 @@ class Fluorescence(TimeseriesDataset):
                 )
 
         return self._get_cells_from_mask(mask)
+
+    def iter_cells(self):
+        """Get an iterator over all cells in the fluorescence dataset.
+
+        Yields
+        ------
+        (cell_num, cell_fluorescence) : (int, Fluorescence)
+            Yields a tuple of the cell number and fluorescence for each cell.
+
+        Example
+        -------
+        >>> fluo_dset = Fluorescence()
+        >>> for cell_num, cell_fluorescence in fluo_dset.iter_cells():
+        >>>     print('Cell number {}'.format(cell_num))
+        >>>     cell_fluorescence.plot()
+
+        """
+        for cell_num in self.cell_vec:
+            yield (cell_num, self.get_cells(cell_num))
 
     def get_frame_range(self, start, stop=None):
         """Get a time window by frame number."""

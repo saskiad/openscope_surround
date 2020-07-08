@@ -151,6 +151,35 @@ class TestTrialFluorescenceSummaryStatistics(unittest.TestCase):
         )
 
 
+class TestTrialFluorescenceIterators(unittest.TestCase):
+    def setUp(self):
+        self.fluo_matrix = np.array([
+            # Trial 0
+            [[1, 2],    # Cell 0
+             [3, 4],    # Cell 1
+             [5, 6]],   # Cell 2
+            # Trial 1
+            [[7, 8],     # Cell 0
+             [9, 10],    # Cell 1
+             [11, 12]]   # Cell 2
+        ])
+        self.trial_fluorescence = do.TrialFluorescence(
+            self.fluo_matrix, [0, 1], 1. / 30.
+        )
+
+    def test_trial_iterator(self):
+        for trial_num, trial_data in self.trial_fluorescence.iter_trials():
+            npt.assert_array_equal(
+                trial_data.fluo,
+                self.fluo_matrix[trial_num, ...][np.newaxis, :, :]
+            )
+
+    def test_cell_iterator(self):
+        for cell_num, cell_data in self.trial_fluorescence.iter_cells():
+            npt.assert_array_equal(
+                cell_data.fluo,
+                self.fluo_matrix[:, cell_num, :][:, np.newaxis, :]
+            )
 
 
 if __name__ == '__main__':
