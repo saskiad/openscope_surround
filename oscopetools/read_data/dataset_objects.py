@@ -249,11 +249,6 @@ class TimeseriesDataset(Dataset):
 
     def _get_nearest_frame(self, time_):
         """Round a timestamp to the nearest integer frame number."""
-        if time_ <= 0.0:
-            raise ValueError(
-                'Expected `time_` to be >= 0, got {}'.format(time_)
-            )
-
         frame_num = int(np.round(time_ / self.timestep_width))
         assert frame_num <= len(self)
 
