@@ -48,6 +48,55 @@ class OrientationOrdering(unittest.TestCase):
         self.assertEqual(cond.Orientation(np.nan), cond.Orientation(None))
 
 
+class OrientationArithmetic(unittest.TestCase):
+    def test_lhs_add(self):
+        expected = cond.Orientation(180.0)
+        actual = cond.Orientation(90.0) + 90.0
+        self.assertEqual(expected, actual, "90 + 90 != 180")
+
+        expected = cond.Orientation(45)
+        actual = cond.Orientation(90) + 315.0
+        self.assertEqual(expected, actual, "90 + 315 != 45")
+
+    def test_lhs_subtract(self):
+        expected = cond.Orientation(90.0)
+        actual = cond.Orientation(180.0) - 90.0
+        self.assertEqual(expected, actual, "180 - 90 != 90")
+
+        expected = cond.Orientation(315)
+        actual = cond.Orientation(45) - 90.0
+        self.assertEqual(expected, actual, "45 - 90 != 315")
+
+    def test_none_propagation(self):
+        expected = cond.Orientation(None)
+
+        # Try various combinations that should all produce Orientation(None)
+        actual = cond.Orientation(90) + None
+        self.assertEqual(expected, actual)
+
+        actual = cond.Orientation(90) + np.nan
+        self.assertEqual(expected, actual)
+
+        actual = cond.Orientation(None) + np.nan
+        self.assertEqual(expected, actual)
+
+        actual = cond.Orientation(None) + 90
+        self.assertEqual(expected, actual)
+
+        actual = cond.Orientation(np.nan) + 90
+        self.assertEqual(expected, actual)
+
+    def test_rhs_add(self):
+        expected = cond.Orientation(180)
+        actual = 90.0 + cond.Orientation(90)
+        self.assertEqual(expected, actual)
+
+    def test_rhs_sub(self):
+        expected = cond.Orientation(90)
+        actual = 180 - cond.Orientation(90)
+        self.assertEqual(expected, actual)
+
+
 class OrientationIteration(unittest.TestCase):
     def test_iteration(self):
         """Iteration yield all allowed values + None"""
@@ -103,3 +152,7 @@ class CenterSurroundStimulusEquality(unittest.TestCase):
         # Not equal if center orientation differs
         css2 = cond.CenterSurroundStimulus(2.0, 0.04, 0.8, None, 90)
         self.assertNotEqual(css1, css2)
+
+
+if __name__ == '__main__':
+    unittest.main()

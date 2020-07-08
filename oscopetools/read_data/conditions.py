@@ -101,6 +101,57 @@ class Orientation(_NamedOrderedSet):
     def __repr__(self):
         return 'Orientation({})'.format(self._member_value)
 
+    def __add__(self, other):
+        other_as_ori = Orientation(other)
+
+        if (self._member_value is None) or (
+            other_as_ori._member_value is None
+        ):
+            new_orientation = Orientation(None)
+        else:
+            new_angle = (
+                self._member_value + other_as_ori._member_value
+            ) % 360.0
+            new_orientation = Orientation(new_angle)
+
+        return new_orientation
+
+    __radd__ = __add__
+
+    def __sub__(self, other):
+        other_as_ori = Orientation(other)
+
+        if (self._member_value is None) or (
+            other_as_ori._member_value is None
+        ):
+            new_orientation = Orientation(None)
+        else:
+            new_angle = (
+                self._member_value - other_as_ori._member_value
+            ) % 360.0
+            new_orientation = Orientation(new_angle)
+
+        return new_orientation
+
+    def __rsub__(self, lhs):
+        lhs_as_ori = Orientation(lhs)
+
+        if (self._member_value is None) or (lhs_as_ori._member_value is None):
+            new_orientation = Orientation(None)
+        else:
+            new_angle = (lhs_as_ori._member_value - self._member_value) % 360.0
+            new_orientation = Orientation(new_angle)
+
+        return new_orientation
+
+    def orthogonal(self):
+        """Return a tuple of orthogonal Orientations."""
+        return (self + 90.0, self - 90.0)
+
+    def opposite(self):
+        """Return the Orientation opposite to the current one."""
+        return self + 180.0
+
 
 class Contrast(_NamedOrderedSet):
     """Contrast of a CenterSurroundStimulus."""
