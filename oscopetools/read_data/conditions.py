@@ -155,6 +155,15 @@ class Orientation(_NamedOrderedSet):
         """Return the Orientation opposite to the current one."""
         return self + 180.0
 
+    @property
+    def radians(self):
+        """Get the equivalent Orientation in radians."""
+        if self._member_value is None:
+            result = np.nan
+        else:
+            result = self._member_value / 360. * (2. * np.pi)
+        return result
+
 
 class Contrast(_NamedOrderedSet):
     """Contrast of a CenterSurroundStimulus."""
