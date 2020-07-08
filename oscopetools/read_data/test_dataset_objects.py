@@ -96,4 +96,62 @@ class TestTrialFluorescenceSubsetting(unittest.TestCase):
         )
 
 
+class TestTrialFluorescenceSummaryStatistics(unittest.TestCase):
+    def setUp(self):
+        self.fluo_matrix = np.array([
+            # Trial 0
+            [[1, 2],    # Cell 0
+             [3, 4],    # Cell 1
+             [5, 6]],   # Cell 2
+            # Trial 1
+            [[7, 8],     # Cell 0
+             [9, 10],    # Cell 1
+             [11, 12]]   # Cell 2
+        ])
+        self.trial_fluorescence = do.TrialFluorescence(
+            self.fluo_matrix, [0, 1], 1. / 30.
+        )
 
+    def test_trial_mean(self):
+        expected = self.fluo_matrix.mean(axis=0)[np.newaxis, :, :]
+        actual = self.trial_fluorescence.trial_mean().fluo
+        npt.assert_allclose(
+            actual, expected, err_msg='Trial mean not correct to within tol.'
+        )
+
+    def test_trial_std(self):
+        expected = self.fluo_matrix.std(axis=0)[np.newaxis, :, :]
+        actual = self.trial_fluorescence.trial_std().fluo
+        npt.assert_allclose(
+            actual, expected, err_msg='Trial std not correct to within tol.'
+        )
+
+    def test_trial_num_isnan_after_mean(self):
+        tr_mean = self.trial_fluorescence.trial_mean()
+        self.assertEqual(
+            len(tr_mean.trial_vec),
+            1,
+            'Expected only 1 trial after taking mean.'
+        )
+        self.assertTrue(
+            np.isnan(tr_mean.trial_vec[0]),
+            'Expected trial_num to be NaN after taking mean across trials'
+        )
+
+    def test_trial_num_isnan_after_std(self):
+        tr_mean = self.trial_fluorescence.trial_std()
+        self.assertEqual(
+            len(tr_mean.trial_vec),
+            1,
+            'Expected only 1 trial after taking std.'
+        )
+        self.assertTrue(
+            np.isnan(tr_mean.trial_vec[0]),
+            'Expected trial_num to be NaN after taking std across trials'
+        )
+
+
+
+
+if __name__ == '__main__':
+    unittest.main()

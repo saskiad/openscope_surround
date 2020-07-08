@@ -14,6 +14,7 @@ import pandas as pd
 class SliceParseError(Exception):
     pass
 
+
 def _try_parse_positionals_as_slice_like(*args):
     """Try to parse positional arguments as a slice-like int or pair of ints.
 
@@ -43,9 +44,7 @@ def _try_parse_positionals_as_slice_like(*args):
     elif int(flattened_args[0]) != flattened_args[0]:
         raise TypeError(
             'Expected positionals to be bool-like or int-like, '
-            'got type {} instead'.format(
-                flattened_args.dtype
-            )
+            'got type {} instead'.format(flattened_args.dtype)
         )
     elif (len(flattened_args) > 0) and (len(flattened_args) <= 2):
         # Positional arguments are a valid slice-like int or pair of ints
@@ -57,6 +56,7 @@ def _try_parse_positionals_as_slice_like(*args):
                 len(flattened_args)
             )
         )
+
 
 def _is_bool(x):
     return isinstance(x, (bool, np.bool, np.bool8, np.bool_))
@@ -259,6 +259,7 @@ class TimeseriesDataset(Dataset):
 
         return min(frame_num, len(self) - 1)
 
+
 class TrialDataset(Dataset):
     """Abstract base class for datasets that are divided into trials.
 
@@ -329,6 +330,32 @@ class TrialDataset(Dataset):
         -------
         trial_subset : TrialDataset
             A new `TrialDataset` object containing only the specified trials.
+
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def trial_mean(self):
+        """Get the mean across all trials.
+
+        Returns
+        -------
+        trial_mean : TrialDataset
+            A new `TrialDataset` object containing the mean of all trials in
+            the current one.
+
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def trial_std(self):
+        """Get the standard deviation across all trials.
+
+        Returns
+        -------
+        trial_std : TrialDataset
+            A new `TrialDataset` object containing the standard deviation of
+            all trials in the current one.
 
         """
         raise NotImplementedError
@@ -428,7 +455,6 @@ class Fluorescence(TimeseriesDataset):
         return cell_subset
 
 
-
 class RawFluorescence(Fluorescence):
     """Fluorescence timeseries from a full imaging session.
 
@@ -484,9 +510,7 @@ class RawFluorescence(Fluorescence):
             if (int(start) != start) or (int(end) != end):
                 raise ValueError(
                     'Expected trial start and end frame numbers'
-                    ' to be ints, got {} and {} instead'.format(
-                        start, end
-                    )
+                    ' to be ints, got {} and {} instead'.format(start, end)
                 )
             start = max(int(start) - num_baseline_frames, 0)
             end = int(end)
@@ -521,13 +545,13 @@ class RawFluorescence(Fluorescence):
 
         # Construct TrialFluorescence and return it.
         trial_fluorescence = TrialFluorescence(
-            np.asarray(trials),
-            trial_num,
-            self.timestep_width,
+            np.asarray(trials), trial_num, self.timestep_width,
         )
         trial_fluorescence.is_z_score = self.is_z_score
         trial_fluorescence.is_dff = self.is_dff
-        trial_fluorescence._baseline_duration = num_baseline_frames * self.timestep_width
+        trial_fluorescence._baseline_duration = (
+            num_baseline_frames * self.timestep_width
+        )
 
         # Check that trial_fluorescence was constructed correctly.
         assert trial_fluorescence.num_cells == self.num_cells
@@ -566,6 +590,17 @@ class TrialFluorescence(Fluorescence, TrialDataset):
         time_vec_without_baseline = super().time_vec
         return time_vec_without_baseline - self._baseline_duration
 
+    def plot(self, ax=None, **pltargs):
+        if ax is None:
+            ax = plt.gca()
+
+        ax.imshow(self.trial_mean().fluo[0, ...], **pltargs)
+
+        return ax
+
+    def apply_quality_control(self, inplace=False):
+        raise NotImplementedError
+
     def _get_trials_from_mask(self, mask):
         trial_subset = self.copy(read_only=True)
         trial_subset._trial_num = trial_subset._trial_num[mask].copy()
@@ -573,16 +608,62 @@ class TrialFluorescence(Fluorescence, TrialDataset):
 
         return trial_subset
 
-    def plot(self, ax=None, **pltargs):
-        if ax is None:
-            ax = plt.gca()
+    def trial_mean(self, ignore_nan=False):
+        """Get the mean fluorescence for each cell across all trials.
 
-        ax.imshow(self.fluo.mean(axis=0), **pltargs)
+        Parameters
+        ----------
+        ignore_nan : bool, default False
+            Whether to return the `mean` or `nanmean` for each cell.
 
-        return ax
+        Returns
+        -------
+        trial_mean : TrialFluoresence
+            A new `TrialFluorescence` object with the mean across trials.
 
-    def apply_quality_control(self, inplace=False):
-        raise NotImplementedError
+        See Also
+        --------
+        `trial_std()`
+
+        """
+        trial_mean = self.copy(read_only=True)
+        trial_mean._trial_num = np.asarray([np.nan])
+
+        if ignore_nan:
+            trial_mean.fluo = np.nanmean(self.fluo, axis=0)[np.newaxis, :, :]
+        else:
+            trial_mean.fluo = self.fluo.mean(axis=0)[np.newaxis, :, :]
+
+        return trial_mean
+
+    def trial_std(self, ignore_nan=False):
+        """Get the standard deviation of the fluorescence for each cell across trials.
+
+        Parameters
+        ----------
+        ignore_nan : bool, default False
+            Whether to return the `std` or `nanstd` for each cell.
+
+        Returns
+        -------
+        trial_std : TrialFluorescence
+            A new `TrialFluorescence` object with the standard deviation across
+            trials.
+
+        See Also
+        --------
+        `trial_mean()`
+
+        """
+        trial_std = self.copy(read_only=True)
+        trial_std._trial_num = np.asarray([np.nan])
+
+        if ignore_nan:
+            trial_std.fluo = np.nanstd(self.fluo, axis=0)[np.newaxis, :, :]
+        else:
+            trial_std.fluo = self.fluo.std(axis=0)[np.newaxis, :, :]
+
+        return trial_std
 
 
 class EyeTracking(TimeseriesDataset):
