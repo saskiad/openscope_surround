@@ -25,11 +25,16 @@ class SetMembershipError(Exception):
 
 class _NamedOrderedSet(metaclass=_IterableNamedOrderedSet):
     _MEMBERS = ()
+    _NULL_ALLOWED = (
+        False  # Whether None or NaN can be used to initialize the class.
+    )
 
     def __init__(self, member_value):
         if member_value in self._MEMBERS:
             self._member_value = member_value
-        elif np.isnan(member_value) and (None in self._MEMBERS):
+        elif self._NULL_ALLOWED and (
+            (member_value is None) or np.isnan(member_value)
+        ):
             self._member_value = None
         else:
             raise SetMembershipError(
@@ -62,7 +67,8 @@ class _NamedOrderedSet(metaclass=_IterableNamedOrderedSet):
 class Orientation(_NamedOrderedSet):
     """Orientation of part of a CenterSurroundStimulus."""
 
-    _MEMBERS = (None, 0, 45, 90, 135, 180, 225, 270, 315)
+    _MEMBERS = (0, 45, 90, 135, 180, 225, 270, 315)
+    _NULL_ALLOWED = True
 
     def __init__(self, orientation):
         if issubclass(type(orientation), Orientation):
@@ -72,20 +78,15 @@ class Orientation(_NamedOrderedSet):
 
         super().__init__(member_value)
 
-    @property
-    def orientation(self):
-        """Orientation in degrees."""
-        return self._member_value
-
     def __lt__(self, other):
         other_as_ori = Orientation(other)
 
         if (self._member_value is not None) and (
-            other_as_ori.orientation is not None
+            other_as_ori._member_value is not None
         ):
-            result = self._member_value < other_as_ori.orientation
+            result = self._member_value < other_as_ori._member_value
         elif (self._member_value is None) and (
-            other_as_ori.orientation is not None
+            other_as_ori._member_value is not None
         ):
             result = True
         else:
@@ -95,7 +96,7 @@ class Orientation(_NamedOrderedSet):
 
     def __eq__(self, other):
         other_as_ori = Orientation(other)
-        return other_as_ori.orientation == self._member_value
+        return other_as_ori._member_value == self._member_value
 
     def __repr__(self):
         return 'Orientation({})'.format(self._member_value)
