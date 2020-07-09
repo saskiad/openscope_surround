@@ -34,6 +34,15 @@ class TestTrialFluorescenceSubsetting(unittest.TestCase):
             self.trial_fluorescence.get_cells(cell_to_extract).cell_vec
         )
 
+    def test_squeezed_cell_subset_by_single_int(self):
+        # Test whether fluorescence is extracted correctly
+        cell_to_extract = 0
+        expected_fluo = self.fluo_matrix[:, cell_to_extract, :]
+        actual_fluo = self.trial_fluorescence.get_cells(
+            cell_to_extract
+        ).data.squeeze()
+        npt.assert_array_equal(expected_fluo, actual_fluo)
+
     def test_cell_subset_by_pair_of_ints(self):
         # Test whether fluorescence is extracted correctly
         expected_fluo = self.fluo_matrix[:, 0:2, :]

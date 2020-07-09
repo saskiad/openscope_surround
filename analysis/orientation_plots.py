@@ -167,7 +167,7 @@ for dfile in os.listdir(args.DATA_PATH):
         # Plot all trials in chronological order
         water_ax = plt.subplot(waterfall_slot)
         water_ax.set_title('All trials')
-        water_ax.imshow(cell_fluo.data[:, 0, :], aspect='auto')
+        water_ax.imshow(cell_fluo.data.squeeze(), aspect='auto')
         water_ax.set_yticks([])
         water_ax.set_xticks([])
 
@@ -195,7 +195,7 @@ for dfile in os.listdir(args.DATA_PATH):
             )
             trial_resolved_ax.plot(
                 cell_fluo.time_vec,
-                cell_fluo.get_trials(trial_mask).data[:, 0, :].T,
+                cell_fluo.get_trials(trial_mask).data.squeeze().T,
                 'k-',
                 alpha=0.5,
             )
