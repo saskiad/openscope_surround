@@ -790,4 +790,39 @@ class EyeTracking(TimeseriesDataset):
 
 
 class RunningSpeed(TimeseriesDataset):
-    pass
+    def __init__(
+        self, running_speed: np.ndarray, timestep_width: float
+    ):
+        running_speed = np.asarray(running_speed)
+        assert running_speed.ndim == 1
+
+        super().__init__(timestep_width)
+        self.data = running_speed
+
+    @property
+    def num_timesteps(self):
+        """Number of timesteps in RunningSpeed dataset."""
+        return len(self.data)
+
+    def get_frame_range(self, start: int, stop: int = None):
+        window = self.copy()
+        if stop is not None:
+            window.data = window.data[start:stop, :].copy()
+        else:
+            window.data = window.data[start, :].copy()
+
+        return window
+
+    def plot(self, ax=None, **pltargs):
+        if ax is None:
+            ax = plt.gca()
+
+        ax.plot(self.time_vec, self.data, **pltargs)
+        ax.set_xlabel('Time (s)')
+        ax.set_ylabel('Running speed')
+
+        return ax
+
+    def apply_quality_control(self, inplace=False):
+        super().apply_quality_control(inplace)
+        raise NotImplementedError
