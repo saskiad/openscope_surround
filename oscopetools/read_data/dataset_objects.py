@@ -4,6 +4,7 @@ __all__ = (
     'TrialFluorescence',
     'EyeTracking',
     'RunningSpeed',
+    'robust_range',
 )
 
 from abc import ABC, abstractmethod
@@ -100,7 +101,7 @@ def _get_vector_mask_from_range(values_to_mask, start, stop=None):
 
 
 def robust_range(
-    values, half_width=1.5, center='median', spread='interquartile_range'
+    values, half_width=2, center='median', spread='interquartile_range'
 ):
     """Get a range around a center point robust to outliers."""
     if center == 'median':
@@ -132,6 +133,9 @@ def robust_range(
     upper_bound = center_val + half_width * spread_val
 
     return (lower_bound, upper_bound)
+
+
+ROBUST_PLOT_RANGE_DEFAULT_HALF_WIDTH = 3
 
 
 class Dataset(ABC):
@@ -801,11 +805,26 @@ class EyeTracking(TimeseriesDataset):
             )
 
         if channel in self.data.columns:
+            if robust_range_:
+                ax.axhspan(
+                    *robust_range(
+                        self.data[channel],
+                        half_width=1.5,
+                        center='median',
+                        spread='iqr'
+                    ),
+                    color='gray',
+                    label='Median $\pm$ 1.5 IQR',
+                    alpha=0.5,
+                )
+                ax.legend()
+
             ax.plot(self.time_vec, self.data[channel], **pltargs)
             ax.set_xlabel('Time (s)')
 
             if robust_range_:
-                ax.set_ylim(robust_range(self.data[channel]))
+                ax.set_ylim(robust_range(self.data[channel], 
+                    half_width=ROBUST_PLOT_RANGE_DEFAULT_HALF_WIDTH))
 
         elif channel == 'position':
             if pltargs.pop('style', None) in ['contour', 'density']:
@@ -826,8 +845,10 @@ class EyeTracking(TimeseriesDataset):
                 )
 
             if robust_range_:
-                ax.set_ylim(robust_range(self.data[self._y_pos_name]))
-                ax.set_xlim(robust_range(self.data[self._x_pos_name]))
+                ax.set_ylim(robust_range(self.data[self._y_pos_name],
+                    half_width=ROBUST_PLOT_RANGE_DEFAULT_HALF_WIDTH))
+                ax.set_xlim(robust_range(self.data[self._x_pos_name],
+                    half_width=ROBUST_PLOT_RANGE_DEFAULT_HALF_WIDTH))
 
         else:
             raise NotImplementedError(
@@ -867,12 +888,31 @@ class RunningSpeed(TimeseriesDataset):
         if ax is None:
             ax = plt.gca()
 
+        if robust_range_:
+            ax.axhspan(
+                *robust_range(
+                    self.data,
+                    half_width=1.5,
+                    center='median',
+                    spread='iqr'
+                ),
+                color='gray',
+                label='Median $\pm$ 1.5 IQR',
+                alpha=0.5,
+            )
+            ax.legend()
+
         ax.plot(self.time_vec, self.data, **pltargs)
         ax.set_xlabel('Time (s)')
         ax.set_ylabel('Running speed')
 
         if robust_range_:
-            ax.set_ylim(robust_range(self.data))
+            ax.set_ylim(
+                robust_range(
+                    self.data,
+                    half_width=ROBUST_PLOT_RANGE_DEFAULT_HALF_WIDTH
+                )
+            )
 
         return ax
 
