@@ -25,7 +25,7 @@ import h5py
 import pandas as pd
 import numpy as np
 
-from .dataset_objects import RawFluorescence, EyeTracking
+from .dataset_objects import RawFluorescence, EyeTracking, RunningSpeed
 from .conditions import CenterSurroundStimulus, SetMembershipError
 
 FRAME_RATE = 30.0  # Assumed frame rate in Hz. TODO: load from a file
@@ -46,7 +46,7 @@ def get_dff_traces(file_path):
         traces.
 
     """
-    f = h5py.File(file_path)
+    f = h5py.File(file_path, 'r')
     dff = f['dff_traces'][()]
     f.close()
 
@@ -70,7 +70,7 @@ def get_raw_traces(file_path):
         A `TimeseriesDataset` subclass containing fluorescence traces.
 
     """
-    f = h5py.File(file_path)
+    f = h5py.File(file_path, 'r')
     raw = f['raw_traces'][()]
     f.close()
 
@@ -81,21 +81,23 @@ def get_raw_traces(file_path):
 
 
 def get_running_speed(file_path):
-    f = h5py.File(file_path)
+    f = h5py.File(file_path, 'r')
     dx = f['running_speed'][()]
     f.close()
-    return dx
+
+    speed = RunningSpeed(dx, 1.0/FRAME_RATE)
+    return speed
 
 
 def get_cell_ids(file_path):
-    f = h5py.File(file_path)
+    f = h5py.File(file_path, 'r')
     cell_ids = f['cell_ids'][()]
     f.close()
     return cell_ids
 
 
 def get_max_projection(file_path):
-    f = h5py.File(file_path)
+    f = h5py.File(file_path, 'r')
     max_proj = f['max_projection'][()]
     f.close()
     return max_proj
@@ -104,7 +106,7 @@ def get_max_projection(file_path):
 def get_metadata(file_path):
     import ast
 
-    f = h5py.File(file_path)
+    f = h5py.File(file_path, 'r')
     md = f.get('meta_data')[...].tolist()
     f.close()
     meta_data = ast.literal_eval(md)

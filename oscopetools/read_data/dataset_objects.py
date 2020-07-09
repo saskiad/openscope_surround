@@ -1,5 +1,10 @@
 """Classes for interacting with OpenScope datasets."""
-__all__ = ('RawFluorescence', 'TrialFluorescence', 'EyeTracking')
+__all__ = (
+    'RawFluorescence',
+    'TrialFluorescence',
+    'EyeTracking',
+    'RunningSpeed',
+)
 
 from abc import ABC, abstractmethod
 from copy import deepcopy
