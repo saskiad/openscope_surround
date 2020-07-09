@@ -11,6 +11,11 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
+def _stripnan(values):
+    values_arr = np.asarray(values).flatten()
+    return values_arr[~np.isnan(values_arr)]
+
+
 class SliceParseError(Exception):
     pass
 
@@ -87,6 +92,41 @@ def _get_vector_mask_from_range(values_to_mask, start, stop=None):
     else:
         mask = values_to_mask == start
     return mask
+
+
+def robust_range(
+    values, half_width=1.5, center='median', spread='interquartile_range'
+):
+    """Get a range around a center point robust to outliers."""
+    if center == 'median':
+        center_val = np.nanmedian(values)
+    elif center == 'mean':
+        center_val = np.nanmean(values)
+    else:
+        raise ValueError(
+            'Unrecognized `center` {}, expected '
+            '`median` or `mean`.'.format(center)
+        )
+
+    if spread in ('interquartile_range', 'iqr'):
+        lower_quantile, upper_quantile = np.percentile(
+            _stripnan(values), (25, 75)
+        )
+        spread_val = upper_quantile - lower_quantile
+    elif spread in ('standard_deviation', 'std'):
+        spread_val = np.nanstd(values)
+    else:
+        raise ValueError(
+            'Unrecognized `spread` {}, expected '
+            '`interquartile_range` (`iqr`) or `standard_deviation` (`std`)'.format(
+                spread
+            )
+        )
+
+    lower_bound = center_val - half_width * spread_val
+    upper_bound = center_val + half_width * spread_val
+
+    return (lower_bound, upper_bound)
 
 
 class Dataset(ABC):
@@ -744,7 +784,7 @@ class EyeTracking(TimeseriesDataset):
 
         return window
 
-    def plot(self, channel='position', ax=None, **pltargs):
+    def plot(self, channel='position', robust_range_=False, ax=None, **pltargs):
         """Make a diagnostic plot of eyetracking data."""
         ax = super().plot(ax, **pltargs)
 
@@ -752,14 +792,16 @@ class EyeTracking(TimeseriesDataset):
         if channel not in self.data.columns and channel != 'position':
             raise ValueError(
                 'Got unrecognized channel `{}`, expected one of '
-                '{} or `position`'.format(
-                    channel, self.data.columns.tolist()
-                )
+                '{} or `position`'.format(channel, self.data.columns.tolist())
             )
 
         if channel in self.data.columns:
             ax.plot(self.time_vec, self.data[channel], **pltargs)
             ax.set_xlabel('Time (s)')
+
+            if robust_range_:
+                ax.set_ylim(robust_range(self.data[channel]))
+
         elif channel == 'position':
             if pltargs.pop('style', None) in ['contour', 'density']:
                 x = self.data[self._x_pos_name]
@@ -777,6 +819,11 @@ class EyeTracking(TimeseriesDataset):
                     self.data[self._y_pos_name],
                     **pltargs
                 )
+
+            if robust_range_:
+                ax.set_ylim(robust_range(self.data[self._y_pos_name]))
+                ax.set_xlim(robust_range(self.data[self._x_pos_name]))
+
         else:
             raise NotImplementedError(
                 'Plotting for channel {} is not implemented.'.format(channel)
@@ -790,9 +837,7 @@ class EyeTracking(TimeseriesDataset):
 
 
 class RunningSpeed(TimeseriesDataset):
-    def __init__(
-        self, running_speed: np.ndarray, timestep_width: float
-    ):
+    def __init__(self, running_speed: np.ndarray, timestep_width: float):
         running_speed = np.asarray(running_speed)
         assert running_speed.ndim == 1
 
@@ -813,13 +858,16 @@ class RunningSpeed(TimeseriesDataset):
 
         return window
 
-    def plot(self, ax=None, **pltargs):
+    def plot(self, robust_range_=False, ax=None, **pltargs):
         if ax is None:
             ax = plt.gca()
 
         ax.plot(self.time_vec, self.data, **pltargs)
         ax.set_xlabel('Time (s)')
         ax.set_ylabel('Running speed')
+
+        if robust_range_:
+            ax.set_ylim(robust_range(self.data))
 
         return ax
 
