@@ -388,7 +388,7 @@ class Fluorescence(TimeseriesDataset):
     def __init__(self, fluorescence_array, timestep_width):
         super().__init__(timestep_width)
 
-        self.fluo = np.asarray(fluorescence_array)
+        self.data = np.asarray(fluorescence_array)
         self.cell_vec = np.arange(0, self.num_cells)
         self.is_z_score = False
         self.is_dff = False
@@ -396,12 +396,12 @@ class Fluorescence(TimeseriesDataset):
     @property
     def num_timesteps(self):
         """Number of timesteps."""
-        return self.fluo.shape[-1]
+        return self.data.shape[-1]
 
     @property
     def num_cells(self):
         """Number of ROIs."""
-        return self.fluo.shape[-2]
+        return self.data.shape[-2]
 
     def get_cells(self, *args):
         # Implementation note:
@@ -448,11 +448,11 @@ class Fluorescence(TimeseriesDataset):
         fluo_copy = self.copy(read_only=True)
 
         if stop is None:
-            time_slice = self.fluo[..., start][..., np.newaxis]
+            time_slice = self.data[..., start][..., np.newaxis]
         else:
-            time_slice = self.fluo[..., start:stop]
+            time_slice = self.data[..., start:stop]
 
-        fluo_copy.fluo = time_slice.copy()
+        fluo_copy.data = time_slice.copy()
         return fluo_copy
 
     def copy(self, read_only=False):
@@ -469,10 +469,10 @@ class Fluorescence(TimeseriesDataset):
         if read_only:
             # Get a read-only view of the fluo array
             # This is much faster than creating a full copy
-            read_only_fluo = self.fluo.view()
+            read_only_fluo = self.data.view()
             read_only_fluo.flags.writeable = False
 
-            deepcopy_memo = {id(self.fluo): read_only_fluo}
+            deepcopy_memo = {id(self.data): read_only_fluo}
             copy_ = deepcopy(self, deepcopy_memo)
         else:
             copy_ = deepcopy(self)
@@ -482,9 +482,9 @@ class Fluorescence(TimeseriesDataset):
     def _get_cells_from_mask(self, mask):
         cell_subset = self.copy(read_only=False)
         cell_subset.cell_vec = self.cell_vec[mask].copy()
-        cell_subset.fluo = self.fluo[..., mask, :].copy()
+        cell_subset.data = self.data[..., mask, :].copy()
 
-        assert cell_subset.fluo.ndim == self.fluo.ndim
+        assert cell_subset.data.ndim == self.data.ndim
         assert cell_subset.num_cells == np.sum(mask)
 
         return cell_subset
@@ -508,9 +508,9 @@ class RawFluorescence(Fluorescence):
         if self.is_z_score:
             raise ValueError('Instance is already a Z-score')
         else:
-            z_score = self.fluo - self.fluo.mean(axis=1)[:, np.newaxis]
+            z_score = self.data - self.data.mean(axis=1)[:, np.newaxis]
             z_score /= z_score.std(axis=1)[:, np.newaxis]
-            self.fluo = z_score
+            self.data = z_score
             self.is_z_score = True
 
     def cut_by_trials(self, trial_timetable, num_baseline_frames=None):
@@ -550,7 +550,7 @@ class RawFluorescence(Fluorescence):
             start = max(int(start) - num_baseline_frames, 0)
             end = int(end)
 
-            trials.append(self.fluo[..., start:end])
+            trials.append(self.data[..., start:end])
             num_frames.append(end - start)
 
         # Truncate all trials to the same length if necessary
@@ -599,7 +599,7 @@ class RawFluorescence(Fluorescence):
         if ax is not None:
             ax = plt.gca()
 
-        ax.imshow(self.fluo, **pltargs)
+        ax.imshow(self.data, **pltargs)
 
         return ax
 
@@ -633,8 +633,8 @@ class TrialFluorescence(Fluorescence, TrialDataset):
             # If there is only one cell, make a line plot
             alpha = pltargs.pop('alpha', 1)
 
-            fluo_mean = self.trial_mean().fluo[0, 0, :]
-            fluo_std = self.trial_std().fluo[0, 0, :]
+            fluo_mean = self.trial_mean().data[0, 0, :]
+            fluo_std = self.trial_std().data[0, 0, :]
             ax.fill_between(
                 self.time_vec,
                 fluo_mean - fluo_std,
@@ -648,7 +648,7 @@ class TrialFluorescence(Fluorescence, TrialDataset):
             ax.legend()
         else:
             # If there are many cells, just show the mean as a matrix.
-            ax.imshow(self.trial_mean().fluo[0, ...], **pltargs)
+            ax.imshow(self.trial_mean().data[0, ...], **pltargs)
 
         return ax
 
@@ -658,7 +658,7 @@ class TrialFluorescence(Fluorescence, TrialDataset):
     def _get_trials_from_mask(self, mask):
         trial_subset = self.copy(read_only=True)
         trial_subset._trial_num = trial_subset._trial_num[mask].copy()
-        trial_subset.fluo = trial_subset.fluo[mask, ...].copy()
+        trial_subset.data = trial_subset.data[mask, ...].copy()
 
         return trial_subset
 
@@ -684,9 +684,9 @@ class TrialFluorescence(Fluorescence, TrialDataset):
         trial_mean._trial_num = np.asarray([np.nan])
 
         if ignore_nan:
-            trial_mean.fluo = np.nanmean(self.fluo, axis=0)[np.newaxis, :, :]
+            trial_mean.data = np.nanmean(self.data, axis=0)[np.newaxis, :, :]
         else:
-            trial_mean.fluo = self.fluo.mean(axis=0)[np.newaxis, :, :]
+            trial_mean.data = self.data.mean(axis=0)[np.newaxis, :, :]
 
         return trial_mean
 
@@ -713,9 +713,9 @@ class TrialFluorescence(Fluorescence, TrialDataset):
         trial_std._trial_num = np.asarray([np.nan])
 
         if ignore_nan:
-            trial_std.fluo = np.nanstd(self.fluo, axis=0)[np.newaxis, :, :]
+            trial_std.data = np.nanstd(self.data, axis=0)[np.newaxis, :, :]
         else:
-            trial_std.fluo = self.fluo.std(axis=0)[np.newaxis, :, :]
+            trial_std.data = self.data.std(axis=0)[np.newaxis, :, :]
 
         return trial_std
 
@@ -728,19 +728,19 @@ class EyeTracking(TimeseriesDataset):
         self, tracked_attributes: pd.DataFrame, timestep_width: float
     ):
         super().__init__(timestep_width)
-        self._dframe = pd.DataFrame(tracked_attributes)
+        self.data = pd.DataFrame(tracked_attributes)
 
     @property
     def num_timesteps(self):
         """Number of timesteps in EyeTracking dataset."""
-        return self._dframe.shape[0]
+        return self.data.shape[0]
 
     def get_frame_range(self, start: int, stop: int = None):
         window = self.copy()
         if stop is not None:
-            window._dframe = window._dframe.iloc[start:stop, :].copy()
+            window.data = window.data.iloc[start:stop, :].copy()
         else:
-            window._dframe = window._dframe.iloc[start, :].copy()
+            window.data = window.data.iloc[start, :].copy()
 
         return window
 
@@ -749,20 +749,20 @@ class EyeTracking(TimeseriesDataset):
         ax = super().plot(ax, **pltargs)
 
         # Check whether the `channel` argument is valid
-        if channel not in self._dframe.columns and channel != 'position':
+        if channel not in self.data.columns and channel != 'position':
             raise ValueError(
                 'Got unrecognized channel `{}`, expected one of '
                 '{} or `position`'.format(
-                    channel, self._dframe.columns.tolist()
+                    channel, self.data.columns.tolist()
                 )
             )
 
-        if channel in self._dframe.columns:
-            ax.plot(self.time_vec, self._dframe[channel], **pltargs)
+        if channel in self.data.columns:
+            ax.plot(self.time_vec, self.data[channel], **pltargs)
         elif channel == 'position':
             if pltargs.pop('style', None) in ['contour', 'density']:
-                x = self._dframe[self._x_pos_name]
-                y = self._dframe[self._y_pos_name]
+                x = self.data[self._x_pos_name]
+                y = self.data[self._y_pos_name]
                 mask = np.isnan(x) | np.isnan(y)
                 if any(mask):
                     warnings.warn(
@@ -772,8 +772,8 @@ class EyeTracking(TimeseriesDataset):
                 sns.kdeplot(x[~mask], y[~mask], ax=ax, **pltargs)
             else:
                 ax.plot(
-                    self._dframe[self._x_pos_name],
-                    self._dframe[self._y_pos_name],
+                    self.data[self._x_pos_name],
+                    self.data[self._y_pos_name],
                     **pltargs
                 )
         else:

@@ -104,7 +104,7 @@ for dfile in os.listdir(args.DATA_PATH):
             max_responses['no_surround'].append(
                 no_surround_trials.get_time_range(*STIM_TIME_WINDOW)
                 .trial_mean()
-                .fluo.max()
+                .data.max()
             )
 
             ## Plot ORTHOGONAL surround trials
@@ -117,7 +117,7 @@ for dfile in os.listdir(args.DATA_PATH):
             max_responses['ortho_surround'].append(
                 ortho_surround_trials.get_time_range(*STIM_TIME_WINDOW)
                 .trial_mean()
-                .fluo.max()
+                .data.max()
             )
 
             ## Plot ISO surround trials
@@ -130,7 +130,7 @@ for dfile in os.listdir(args.DATA_PATH):
             max_responses['iso_surround'].append(
                 iso_surround_trials.get_time_range(*STIM_TIME_WINDOW)
                 .trial_mean()
-                .fluo.max()
+                .data.max()
             )
 
             mean_axes[i].legend().remove()
@@ -167,7 +167,7 @@ for dfile in os.listdir(args.DATA_PATH):
         # Plot all trials in chronological order
         water_ax = plt.subplot(waterfall_slot)
         water_ax.set_title('All trials')
-        water_ax.imshow(cell_fluo.fluo[:, 0, :], aspect='auto')
+        water_ax.imshow(cell_fluo.data[:, 0, :], aspect='auto')
         water_ax.set_yticks([])
         water_ax.set_xticks([])
 
@@ -195,7 +195,7 @@ for dfile in os.listdir(args.DATA_PATH):
             )
             trial_resolved_ax.plot(
                 cell_fluo.time_vec,
-                cell_fluo.get_trials(trial_mask).fluo[:, 0, :].T,
+                cell_fluo.get_trials(trial_mask).data[:, 0, :].T,
                 'k-',
                 alpha=0.5,
             )

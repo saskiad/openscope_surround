@@ -25,7 +25,7 @@ class TestTrialFluorescenceSubsetting(unittest.TestCase):
         # Test whether fluorescence is extracted correctly
         cell_to_extract = 0
         expected_fluo = self.fluo_matrix[:, cell_to_extract, :][:, np.newaxis, :]
-        actual_fluo = self.trial_fluorescence.get_cells(cell_to_extract).fluo
+        actual_fluo = self.trial_fluorescence.get_cells(cell_to_extract).data
         npt.assert_array_equal(expected_fluo, actual_fluo)
 
         # Test whether cell labels are subsetted correctly
@@ -37,7 +37,7 @@ class TestTrialFluorescenceSubsetting(unittest.TestCase):
     def test_cell_subset_by_pair_of_ints(self):
         # Test whether fluorescence is extracted correctly
         expected_fluo = self.fluo_matrix[:, 0:2, :]
-        actual_fluo = self.trial_fluorescence.get_cells(0, 2).fluo
+        actual_fluo = self.trial_fluorescence.get_cells(0, 2).data
         npt.assert_array_equal(expected_fluo, actual_fluo)
 
         # Test whether cell labels are subsetted correctly
@@ -49,7 +49,7 @@ class TestTrialFluorescenceSubsetting(unittest.TestCase):
     def test_cell_subset_by_tuple_of_ints(self):
         # Test whether fluorescence is extracted correctly
         expected_fluo = self.fluo_matrix[:, 0:2, :]
-        actual_fluo = self.trial_fluorescence.get_cells((0, 2)).fluo
+        actual_fluo = self.trial_fluorescence.get_cells((0, 2)).data
         npt.assert_array_equal(expected_fluo, actual_fluo)
 
         # Test whether cell labels are subsetted correctly
@@ -61,7 +61,7 @@ class TestTrialFluorescenceSubsetting(unittest.TestCase):
     def test_cell_subset_by_bool_mask(self):
         mask = [True, False, True]
         expected_fluo = self.fluo_matrix[:, mask, :]
-        actual_fluo = self.trial_fluorescence.get_cells(mask).fluo
+        actual_fluo = self.trial_fluorescence.get_cells(mask).data
         npt.assert_array_equal(expected_fluo, actual_fluo)
 
         # Test whether cell labels are subsetted correctly
@@ -74,7 +74,7 @@ class TestTrialFluorescenceSubsetting(unittest.TestCase):
         # Test whether fluorescence is extracted correctly
         trial_to_extract = 0
         expected_fluo = self.fluo_matrix[trial_to_extract, :, :][np.newaxis, :, :]
-        actual_fluo = self.trial_fluorescence.get_trials(trial_to_extract).fluo
+        actual_fluo = self.trial_fluorescence.get_trials(trial_to_extract).data
         npt.assert_array_equal(expected_fluo, actual_fluo)
 
         # Test whether cell labels are subsetted correctly
@@ -86,7 +86,7 @@ class TestTrialFluorescenceSubsetting(unittest.TestCase):
     def test_trial_subset_by_bool_mask(self):
         mask = [False, True]
         expected_fluo = self.fluo_matrix[mask, :, :]
-        actual_fluo = self.trial_fluorescence.get_trials(mask).fluo
+        actual_fluo = self.trial_fluorescence.get_trials(mask).data
         npt.assert_array_equal(expected_fluo, actual_fluo)
 
         # Test whether trial labels are subsetted correctly
@@ -114,14 +114,14 @@ class TestTrialFluorescenceSummaryStatistics(unittest.TestCase):
 
     def test_trial_mean(self):
         expected = self.fluo_matrix.mean(axis=0)[np.newaxis, :, :]
-        actual = self.trial_fluorescence.trial_mean().fluo
+        actual = self.trial_fluorescence.trial_mean().data
         npt.assert_allclose(
             actual, expected, err_msg='Trial mean not correct to within tol.'
         )
 
     def test_trial_std(self):
         expected = self.fluo_matrix.std(axis=0)[np.newaxis, :, :]
-        actual = self.trial_fluorescence.trial_std().fluo
+        actual = self.trial_fluorescence.trial_std().data
         npt.assert_allclose(
             actual, expected, err_msg='Trial std not correct to within tol.'
         )
@@ -170,14 +170,14 @@ class TestTrialFluorescenceIterators(unittest.TestCase):
     def test_trial_iterator(self):
         for trial_num, trial_data in self.trial_fluorescence.iter_trials():
             npt.assert_array_equal(
-                trial_data.fluo,
+                trial_data.data,
                 self.fluo_matrix[trial_num, ...][np.newaxis, :, :]
             )
 
     def test_cell_iterator(self):
         for cell_num, cell_data in self.trial_fluorescence.iter_cells():
             npt.assert_array_equal(
-                cell_data.fluo,
+                cell_data.data,
                 self.fluo_matrix[:, cell_num, :][:, np.newaxis, :]
             )
 
