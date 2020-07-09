@@ -759,6 +759,7 @@ class EyeTracking(TimeseriesDataset):
 
         if channel in self.data.columns:
             ax.plot(self.time_vec, self.data[channel], **pltargs)
+            ax.set_xlabel('Time (s)')
         elif channel == 'position':
             if pltargs.pop('style', None) in ['contour', 'density']:
                 x = self.data[self._x_pos_name]
