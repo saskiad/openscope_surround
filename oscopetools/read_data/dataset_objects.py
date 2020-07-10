@@ -690,7 +690,7 @@ class TrialFluorescence(Fluorescence, TrialDataset):
                 fluo_mean + fluo_std,
                 label='Mean $\pm$ SD',
                 alpha=alpha * 0.6,
-                **pltargs
+                **pltargs,
             )
             ax.plot(self.time_vec, fluo_mean, alpha=alpha, **pltargs)
             ax.set_xlabel('Time (s)')
@@ -793,7 +793,9 @@ class EyeTracking(TimeseriesDataset):
 
         return window
 
-    def plot(self, channel='position', robust_range_=False, ax=None, **pltargs):
+    def plot(
+        self, channel='position', robust_range_=False, ax=None, **pltargs
+    ):
         """Make a diagnostic plot of eyetracking data."""
         ax = super().plot(ax, **pltargs)
 
@@ -811,7 +813,7 @@ class EyeTracking(TimeseriesDataset):
                         self.data[channel],
                         half_width=1.5,
                         center='median',
-                        spread='iqr'
+                        spread='iqr',
                     ),
                     color='gray',
                     label='Median $\pm$ 1.5 IQR',
@@ -823,8 +825,12 @@ class EyeTracking(TimeseriesDataset):
             ax.set_xlabel('Time (s)')
 
             if robust_range_:
-                ax.set_ylim(robust_range(self.data[channel], 
-                    half_width=ROBUST_PLOT_RANGE_DEFAULT_HALF_WIDTH))
+                ax.set_ylim(
+                    robust_range(
+                        self.data[channel],
+                        half_width=ROBUST_PLOT_RANGE_DEFAULT_HALF_WIDTH,
+                    )
+                )
 
         elif channel == 'position':
             if pltargs.pop('style', None) in ['contour', 'density']:
@@ -841,19 +847,27 @@ class EyeTracking(TimeseriesDataset):
                 ax.plot(
                     self.data[self._x_pos_name],
                     self.data[self._y_pos_name],
-                    **pltargs
+                    **pltargs,
                 )
 
             if robust_range_:
                 # Set limits based on approx. data range, excluding outliers
-                ax.set_ylim(robust_range(self.data[self._y_pos_name],
-                    half_width=ROBUST_PLOT_RANGE_DEFAULT_HALF_WIDTH))
-                ax.set_xlim(robust_range(self.data[self._x_pos_name],
-                    half_width=ROBUST_PLOT_RANGE_DEFAULT_HALF_WIDTH))
+                ax.set_ylim(
+                    robust_range(
+                        self.data[self._y_pos_name],
+                        half_width=ROBUST_PLOT_RANGE_DEFAULT_HALF_WIDTH,
+                    )
+                )
+                ax.set_xlim(
+                    robust_range(
+                        self.data[self._x_pos_name],
+                        half_width=ROBUST_PLOT_RANGE_DEFAULT_HALF_WIDTH,
+                    )
+                )
             else:
                 # Set limits to a 180 deg standard range
-                ax.set_xlim(-90., 90.)
-                ax.set_ylim(-90., 90.)
+                ax.set_xlim(-90.0, 90.0)
+                ax.set_ylim(-90.0, 90.0)
 
         else:
             raise NotImplementedError(
@@ -896,10 +910,7 @@ class RunningSpeed(TimeseriesDataset):
         if robust_range_:
             ax.axhspan(
                 *robust_range(
-                    self.data,
-                    half_width=1.5,
-                    center='median',
-                    spread='iqr'
+                    self.data, half_width=1.5, center='median', spread='iqr'
                 ),
                 color='gray',
                 label='Median $\pm$ 1.5 IQR',
@@ -914,8 +925,7 @@ class RunningSpeed(TimeseriesDataset):
         if robust_range_:
             ax.set_ylim(
                 robust_range(
-                    self.data,
-                    half_width=ROBUST_PLOT_RANGE_DEFAULT_HALF_WIDTH
+                    self.data, half_width=ROBUST_PLOT_RANGE_DEFAULT_HALF_WIDTH
                 )
             )
 
