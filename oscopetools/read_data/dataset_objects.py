@@ -845,10 +845,15 @@ class EyeTracking(TimeseriesDataset):
                 )
 
             if robust_range_:
+                # Set limits based on approx. data range, excluding outliers
                 ax.set_ylim(robust_range(self.data[self._y_pos_name],
                     half_width=ROBUST_PLOT_RANGE_DEFAULT_HALF_WIDTH))
                 ax.set_xlim(robust_range(self.data[self._x_pos_name],
                     half_width=ROBUST_PLOT_RANGE_DEFAULT_HALF_WIDTH))
+            else:
+                # Set limits to a 180 deg standard range
+                ax.set_xlim(-90., 90.)
+                ax.set_ylim(-90., 90.)
 
         else:
             raise NotImplementedError(
