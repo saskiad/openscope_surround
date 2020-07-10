@@ -49,13 +49,20 @@ for dfile in tqdm(os.listdir(args.DATA_PATH)):
     plt.subplot(spec[0, 2])
     plt.title('Position')
     eyetracking.plot(
-        'position', marker='o', ls='none', markeredgecolor='w', alpha=0.7
+        'position',
+        marker='o',
+        ls='none',
+        markeredgecolor='gray',
+        markeredgewidth=0.5,
+        alpha=0.7,
     )
 
     plt.subplot(spec[1, 2])
     eyetracking.plot('position', style='density', robust_range_=True)
 
     plt.tight_layout()
-    plt.savefig(os.path.join(args.output, dfile.strip('.h5') + '.png'), dpi=600)
+    plt.savefig(
+        os.path.join(args.output, dfile.strip('.h5') + '.png'), dpi=600
+    )
 
     plt.close()
