@@ -562,7 +562,7 @@ class RawFluorescence(Fluorescence):
             self.data = z_score
             self.is_z_score = True
 
-    def cut_by_trials(self, trial_timetable, num_baseline_frames=None):
+    def cut_by_trials(self, trial_timetable, num_baseline_frames=None, both_ends_baseline=False):
         """Divide fluorescence traces up into equal-length trials.
 
         Parameters
@@ -597,7 +597,7 @@ class RawFluorescence(Fluorescence):
                     ' to be ints, got {} and {} instead'.format(start, end)
                 )
             start = max(int(start) - num_baseline_frames, 0)
-            end = int(end)
+            end = int(end) + num_baseline_frames if both_ends_baseline else int(end)
 
             trials.append(self.data[..., start:end])
             num_frames.append(end - start)
