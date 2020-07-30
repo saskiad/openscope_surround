@@ -1,10 +1,10 @@
 """Classes for interacting with OpenScope datasets."""
 __all__ = (
-    'RawFluorescence',
-    'TrialFluorescence',
-    'EyeTracking',
-    'RunningSpeed',
-    'robust_range',
+    "RawFluorescence",
+    "TrialFluorescence",
+    "EyeTracking",
+    "RunningSpeed",
+    "robust_range",
 )
 
 from abc import ABC, abstractmethod
@@ -49,13 +49,13 @@ def _try_parse_positionals_as_slice_like(*args):
     """
     flattened_args = np.asarray(args).flatten()
     if len(flattened_args) == 0:
-        raise ValueError('Empty positional arguments')
+        raise ValueError("Empty positional arguments")
     elif _is_bool(flattened_args[0]):
-        raise SliceParseError('Cannot parse bool positionals as slice.')
+        raise SliceParseError("Cannot parse bool positionals as slice.")
     elif int(flattened_args[0]) != flattened_args[0]:
         raise TypeError(
-            'Expected positionals to be bool-like or int-like, '
-            'got type {} instead'.format(flattened_args.dtype)
+            "Expected positionals to be bool-like or int-like, "
+            "got type {} instead".format(flattened_args.dtype)
         )
     elif (len(flattened_args) > 0) and (len(flattened_args) <= 2):
         # Positional arguments are a valid slice-like int or pair of ints
@@ -63,7 +63,7 @@ def _try_parse_positionals_as_slice_like(*args):
     else:
         # Case: positionals are not bool and are of the wrong length
         raise ValueError(
-            'Positionals of length {} cannot be parsed as slice-like'.format(
+            "Positionals of length {} cannot be parsed as slice-like".format(
                 len(flattened_args)
             )
         )
@@ -76,15 +76,15 @@ def _is_bool(x):
 def _validate_vector_mask_length(mask, expected_length):
     if np.ndim(mask) != 1:
         raise ValueError(
-            'Expected mask to be vector-like, got '
-            '{}D array instead'.format(np.ndim(mask))
+            "Expected mask to be vector-like, got "
+            "{}D array instead".format(np.ndim(mask))
         )
 
     mask = np.asarray(mask).flatten()
     if len(mask) != expected_length:
         raise ValueError(
-            'Expected mask of length {}, got mask of '
-            'length {} instead.'.format(len(mask), expected_length)
+            "Expected mask of length {}, got mask of "
+            "length {} instead.".format(len(mask), expected_length)
         )
 
     return mask
@@ -101,30 +101,30 @@ def _get_vector_mask_from_range(values_to_mask, start, stop=None):
 
 
 def robust_range(
-    values, half_width=2, center='median', spread='interquartile_range'
+    values, half_width=2, center="median", spread="interquartile_range"
 ):
     """Get a range around a center point robust to outliers."""
-    if center == 'median':
+    if center == "median":
         center_val = np.nanmedian(values)
-    elif center == 'mean':
+    elif center == "mean":
         center_val = np.nanmean(values)
     else:
         raise ValueError(
-            'Unrecognized `center` {}, expected '
-            '`median` or `mean`.'.format(center)
+            "Unrecognized `center` {}, expected "
+            "`median` or `mean`.".format(center)
         )
 
-    if spread in ('interquartile_range', 'iqr'):
+    if spread in ("interquartile_range", "iqr"):
         lower_quantile, upper_quantile = np.percentile(
             _stripnan(values), (25, 75)
         )
         spread_val = upper_quantile - lower_quantile
-    elif spread in ('standard_deviation', 'std'):
+    elif spread in ("standard_deviation", "std"):
         spread_val = np.nanstd(values)
     else:
         raise ValueError(
-            'Unrecognized `spread` {}, expected '
-            '`interquartile_range` (`iqr`) or `standard_deviation` (`std`)'.format(
+            "Unrecognized `spread` {}, expected "
+            "`interquartile_range` (`iqr`) or `standard_deviation` (`std`)".format(
                 spread
             )
         )
@@ -247,7 +247,7 @@ class TimeseriesDataset(Dataset):
         )
         assert len(time_vec) == len(
             self
-        ), 'Length of time_vec ({}) does not match instance length ({})'.format(
+        ), "Length of time_vec ({}) does not match instance length ({})".format(
             len(time_vec), len(self)
         )
         return time_vec
@@ -352,7 +352,7 @@ class TrialDataset(Dataset):
                 mask = _validate_vector_mask_length(args[0], self.num_trials)
             else:
                 raise ValueError(
-                    'Expected a single mask argument, got {}'.format(len(args))
+                    "Expected a single mask argument, got {}".format(len(args))
                 )
 
         return self._get_trials_from_mask(mask)
@@ -441,6 +441,7 @@ class Fluorescence(TimeseriesDataset):
         self.cell_vec = np.arange(0, self.num_cells)
         self.is_z_score = False
         self.is_dff = False
+        self.is_positive_clipped = False
 
     @property
     def num_timesteps(self):
@@ -468,7 +469,7 @@ class Fluorescence(TimeseriesDataset):
                 mask = _validate_vector_mask_length(args[0], self.num_cells)
             else:
                 raise ValueError(
-                    'Expected a single mask argument, got {}'.format(len(args))
+                    "Expected a single mask argument, got {}".format(len(args))
                 )
 
         return self._get_cells_from_mask(mask)
@@ -538,6 +539,15 @@ class Fluorescence(TimeseriesDataset):
 
         return cell_subset
 
+    def positive_part(self):
+        """Set the negative part of data to zero."""
+        if self.is_positive_clipped:
+            raise ValueError("Instance is already positive clipped.")
+        fluo_copy = self.copy(read_only=False)
+        fluo_copy.data[fluo_copy.data < 0] = 0
+        fluo_copy.is_positive_clipped = True
+        return fluo_copy
+
 
 class RawFluorescence(Fluorescence):
     """Fluorescence timeseries from a full imaging session.
@@ -555,14 +565,19 @@ class RawFluorescence(Fluorescence):
     def z_score(self):
         """Convert to Z-score."""
         if self.is_z_score:
-            raise ValueError('Instance is already a Z-score')
+            raise ValueError("Instance is already a Z-score")
         else:
             z_score = self.data - self.data.mean(axis=1)[:, np.newaxis]
             z_score /= z_score.std(axis=1)[:, np.newaxis]
             self.data = z_score
             self.is_z_score = True
 
-    def cut_by_trials(self, trial_timetable, num_baseline_frames=None):
+    def cut_by_trials(
+        self,
+        trial_timetable,
+        num_baseline_frames=None,
+        both_ends_baseline=False,
+    ):
         """Divide fluorescence traces up into equal-length trials.
 
         Parameters
@@ -576,9 +591,9 @@ class RawFluorescence(Fluorescence):
         trial_fluorescence : TrialFluorescence
 
         """
-        if ('Start' not in trial_timetable) or ('End' not in trial_timetable):
+        if ("Start" not in trial_timetable) or ("End" not in trial_timetable):
             raise ValueError(
-                'Could not find `Start` and `End` in trial_timetable.'
+                "Could not find `Start` and `End` in trial_timetable."
             )
 
         if (num_baseline_frames is None) or (num_baseline_frames < 0):
@@ -588,16 +603,19 @@ class RawFluorescence(Fluorescence):
         trials = []
         num_frames = []
         for start, end in zip(
-            trial_timetable['Start'], trial_timetable['End']
+            trial_timetable["Start"], trial_timetable["End"]
         ):
             # Coerce `start` and `end` to ints if possible
             if (int(start) != start) or (int(end) != end):
                 raise ValueError(
-                    'Expected trial start and end frame numbers'
-                    ' to be ints, got {} and {} instead'.format(start, end)
+                    "Expected trial start and end frame numbers"
+                    " to be ints, got {} and {} instead".format(start, end)
                 )
             start = max(int(start) - num_baseline_frames, 0)
-            end = int(end)
+            if both_ends_baseline:
+                end = int(end) + num_baseline_frames
+            else:
+                end = int(end)
 
             trials.append(self.data[..., start:end])
             num_frames.append(end - start)
@@ -606,8 +624,8 @@ class RawFluorescence(Fluorescence):
         min_num_frames = min(num_frames)
         if not all([dur == min_num_frames for dur in num_frames]):
             warnings.warn(
-                'Truncating all trials to shortest duration {} '
-                'frames (longest trial is {} frames)'.format(
+                "Truncating all trials to shortest duration {} "
+                "frames (longest trial is {} frames)".format(
                     min_num_frames, max(num_frames)
                 )
             )
@@ -616,14 +634,14 @@ class RawFluorescence(Fluorescence):
 
         # Try to get a vector of trial numbers
         try:
-            trial_num = trial_timetable['trial_num']
+            trial_num = trial_timetable["trial_num"]
         except KeyError:
             try:
                 trial_num = trial_timetable.index.tolist()
             except AttributeError:
                 warnings.warn(
-                    'Could not get trial_num from trial_timetable. '
-                    'Falling back to arange.'
+                    "Could not get trial_num from trial_timetable. "
+                    "Falling back to arange."
                 )
                 trial_num = np.arange(0, len(trials))
 
@@ -636,6 +654,7 @@ class RawFluorescence(Fluorescence):
         trial_fluorescence._baseline_duration = (
             num_baseline_frames * self.timestep_width
         )
+        trial_fluorescence._both_ends_baseline = both_ends_baseline
 
         # Check that trial_fluorescence was constructed correctly.
         assert trial_fluorescence.num_cells == self.num_cells
@@ -667,6 +686,7 @@ class TrialFluorescence(Fluorescence, TrialDataset):
         super().__init__(fluorescence_array, timestep_width)
 
         self._baseline_duration = 0
+        self._both_ends_baseline = False
         self._trial_num = np.asarray(trial_num)
 
     @property
@@ -674,26 +694,52 @@ class TrialFluorescence(Fluorescence, TrialDataset):
         time_vec_without_baseline = super().time_vec
         return time_vec_without_baseline - self._baseline_duration
 
-    def plot(self, ax=None, **pltargs):
+    def plot(
+        self,
+        ax=None,
+        fill_mean_pm_std=True,
+        highlight_non_baseline=False,
+        **pltargs
+    ):
         if ax is None:
             ax = plt.gca()
 
         if self.num_cells == 1:
             # If there is only one cell, make a line plot
-            alpha = pltargs.pop('alpha', 1)
+            alpha = pltargs.pop("alpha", 1)
 
             fluo_mean = self.trial_mean().data[0, 0, :]
             fluo_std = self.trial_std().data[0, 0, :]
-            ax.fill_between(
-                self.time_vec,
-                fluo_mean - fluo_std,
-                fluo_mean + fluo_std,
-                label='Mean $\pm$ SD',
-                alpha=alpha * 0.6,
-                **pltargs,
-            )
+
+            if fill_mean_pm_std:
+                ax.fill_between(
+                    self.time_vec,
+                    fluo_mean - fluo_std,
+                    fluo_mean + fluo_std,
+                    label="Mean $\pm$ SD",
+                    alpha=alpha * 0.6,
+                    **pltargs,
+                )
+
             ax.plot(self.time_vec, fluo_mean, alpha=alpha, **pltargs)
-            ax.set_xlabel('Time (s)')
+            if highlight_non_baseline:
+                stim_start = self.time_vec[0] + self._baseline_duration
+                if self._both_ends_baseline:
+                    stim_end = self.time_vec[-1] - self._baseline_duration
+                else:
+                    stim_end = self.time_vec[-1]
+                ax.axvspan(
+                    stim_start,
+                    stim_end,
+                    color="gray",
+                    alpha=0.3,
+                    label="Stimulus",
+                )
+            ax.set_xlabel("Time (s)")
+            if self.is_z_score:
+                ax.set_ylabel("DF/F (Z-score)")
+            else:
+                ax.set_ylabel("DF/F")
             ax.legend()
         else:
             # If there are many cells, just show the mean as a matrix.
@@ -770,40 +816,161 @@ class TrialFluorescence(Fluorescence, TrialDataset):
 
 
 class EyeTracking(TimeseriesDataset):
-    _x_pos_name = 'x_pos_deg'
-    _y_pos_name = 'y_pos_deg'
+    _eye_area_name = "eye_area"
+    _pupil_area_name = "pupil_area"
+    _x_pos_name = "x_pos_deg"
+    _y_pos_name = "y_pos_deg"
 
     def __init__(
         self, tracked_attributes: pd.DataFrame, timestep_width: float
     ):
         super().__init__(timestep_width)
         self.data = pd.DataFrame(tracked_attributes)
+        self._is_trial = False
 
     @property
     def num_timesteps(self):
         """Number of timesteps in EyeTracking dataset."""
-        return self.data.shape[0]
+        if self._is_trial:
+            if self._within_trial:
+                return 1
+            else:
+                return len(self.data.iloc[0, 0])
+        else:
+            return self.data.shape[0]
 
     def get_frame_range(self, start: int, stop: int = None):
         window = self.copy()
         if stop is not None:
-            window.data = window.data.iloc[start:stop, :].copy()
+            if self._is_trial:
+                if not self._within_trial:
+                    window.data = window.data.applymap(
+                        lambda x: x[start:stop]
+                    ).copy()
+            else:
+                window.data = window.data.iloc[start:stop, :].copy()
         else:
-            window.data = window.data.iloc[start, :].copy()
+            if self._is_trial:
+                if not self._within_trial:
+                    window.data = window.data.applymap(
+                        lambda x: x[start : start + 1]
+                    ).copy()
+            else:
+                window.data = window.data.iloc[start, :].copy()
 
         return window
 
+    def cut_by_trials(
+        self,
+        trial_timetable,
+        num_baseline_frames=None,
+        both_ends_baseline=False,
+    ):
+        """Divide eye tracking parameters up into equal-length trials.
+
+        Parameters
+        ----------
+        trial_timetable : pd.DataFrame-like
+            A DataFrame-like object with 'Start' and 'End' items for the start
+            and end frames of each trial, respectively.
+
+        Returns
+        -------
+        trial_eyetracking : TrialEyeTracking
+
+        """
+        if ("Start" not in trial_timetable) or ("End" not in trial_timetable):
+            raise ValueError(
+                "Could not find `Start` and `End` in trial_timetable."
+            )
+
+        if (num_baseline_frames is None) or (num_baseline_frames < 0):
+            num_baseline_frames = 0
+
+        # Slice one EyeTracking parameter up into trials.
+        # 4 columns in total: col_0, col_1, col_2, and col_3,
+        # corresponding to eye_area, pupil_area, x_pos_deg, and y_pos_deg,
+        # Noneed to worry even if the columns are switched.
+        col_0 = []
+        col_1 = []
+        col_2 = []
+        col_3 = []
+        num_frames = []
+        for start, end in zip(
+            trial_timetable["Start"], trial_timetable["End"]
+        ):
+            # Coerce `start` and `end` to ints if possible
+            if (int(start) != start) or (int(end) != end):
+                raise ValueError(
+                    "Expected trial start and end frame numbers"
+                    " to be ints, got {} and {} instead".format(start, end)
+                )
+            start = max(int(start) - num_baseline_frames, 0)
+            if both_ends_baseline:
+                end = int(end) + num_baseline_frames
+            else:
+                end = int(end)
+
+            col_0.append(self.data.iloc[start:end, 0].values)
+            col_1.append(self.data.iloc[start:end, 1].values)
+            col_2.append(self.data.iloc[start:end, 2].values)
+            col_3.append(self.data.iloc[start:end, 3].values)
+            num_frames.append(end - start)
+
+        # Create a new pd.DataFrame with trials as rows
+        list_of_tuples = list(zip(col_0, col_1, col_2, col_3))
+        trials = pd.DataFrame(list_of_tuples, columns=self.data.columns)
+
+        # Truncate all trials to the same length if necessary
+        min_num_frames = min(num_frames)
+        if not all([dur == min_num_frames for dur in num_frames]):
+            warnings.warn(
+                "Truncating all trials to shortest duration {} "
+                "frames (longest trial is {} frames)".format(
+                    min_num_frames, max(num_frames)
+                )
+            )
+            trials = trials.applymap(lambda x: x[:min_num_frames])
+
+        # Try to get a vector of trial numbers
+        try:
+            trial_num = trial_timetable["trial_num"]
+        except KeyError:
+            try:
+                trial_num = trial_timetable.index.tolist()
+            except AttributeError:
+                warnings.warn(
+                    "Could not get trial_num from trial_timetable. "
+                    "Falling back to arange."
+                )
+                trial_num = np.arange(0, len(trials))
+
+        # Construct TrialEyeTracking and return it.
+        trial_eyetracking = TrialEyeTracking(
+            trials, trial_num, self.timestep_width,
+        )
+        trial_eyetracking._baseline_duration = (
+            num_baseline_frames * self.timestep_width
+        )
+        trial_eyetracking._both_ends_baseline = both_ends_baseline
+
+        # Check that trial_eyetracking was constructed correctly.
+        assert trial_eyetracking.num_timesteps == min_num_frames
+        assert trial_eyetracking.num_trials == len(trials)
+
+        return trial_eyetracking
+
     def plot(
-        self, channel='position', robust_range_=False, ax=None, **pltargs
+        self, channel="position", robust_range_=False, ax=None, **pltargs
     ):
         """Make a diagnostic plot of eyetracking data."""
         ax = super().plot(ax, **pltargs)
 
         # Check whether the `channel` argument is valid
-        if channel not in self.data.columns and channel != 'position':
+        if channel not in self.data.columns and channel != "position":
             raise ValueError(
-                'Got unrecognized channel `{}`, expected one of '
-                '{} or `position`'.format(channel, self.data.columns.tolist())
+                "Got unrecognized channel `{}`, expected one of "
+                "{} or `position`".format(channel, self.data.columns.tolist())
             )
 
         if channel in self.data.columns:
@@ -812,17 +979,17 @@ class EyeTracking(TimeseriesDataset):
                     *robust_range(
                         self.data[channel],
                         half_width=1.5,
-                        center='median',
-                        spread='iqr',
+                        center="median",
+                        spread="iqr",
                     ),
-                    color='gray',
-                    label='Median $\pm$ 1.5 IQR',
+                    color="gray",
+                    label="Median $\pm$ 1.5 IQR",
                     alpha=0.5,
                 )
                 ax.legend()
 
             ax.plot(self.time_vec, self.data[channel], **pltargs)
-            ax.set_xlabel('Time (s)')
+            ax.set_xlabel("Time (s)")
 
             if robust_range_:
                 ax.set_ylim(
@@ -832,15 +999,15 @@ class EyeTracking(TimeseriesDataset):
                     )
                 )
 
-        elif channel == 'position':
-            if pltargs.pop('style', None) in ['contour', 'density']:
+        elif channel == "position":
+            if pltargs.pop("style", None) in ["contour", "density"]:
                 x = self.data[self._x_pos_name]
                 y = self.data[self._y_pos_name]
                 mask = np.isnan(x) | np.isnan(y)
                 if any(mask):
                     warnings.warn(
-                        'Dropping {} NaN entries in order to estimate '
-                        'density.'.format(sum(mask))
+                        "Dropping {} NaN entries in order to estimate "
+                        "density.".format(sum(mask))
                     )
                 sns.kdeplot(x[~mask], y[~mask], ax=ax, **pltargs)
             else:
@@ -871,7 +1038,7 @@ class EyeTracking(TimeseriesDataset):
 
         else:
             raise NotImplementedError(
-                'Plotting for channel {} is not implemented.'.format(channel)
+                "Plotting for channel {} is not implemented.".format(channel)
             )
 
         return ax
@@ -879,6 +1046,135 @@ class EyeTracking(TimeseriesDataset):
     def apply_quality_control(self, inplace=False):
         super().apply_quality_control(inplace)
         raise NotImplementedError
+
+
+class TrialEyeTracking(EyeTracking, TrialDataset):
+    """EyeTracking timeseries divided into trials."""
+
+    def __init__(self, eye_tracking_df, trial_num, timestep_width):
+        eye_tracking_df = pd.DataFrame(eye_tracking_df)
+        assert eye_tracking_df.ndim == 2
+        assert eye_tracking_df.shape[0] == len(trial_num)
+
+        super().__init__(eye_tracking_df, timestep_width)
+
+        self._is_trial = True
+        self._baseline_duration = 0
+        self._both_ends_baseline = False
+        self._trial_num = np.asarray(trial_num)
+        self._within_trial = False
+
+    def _get_trials_from_mask(self, mask):
+        trial_subset = self.copy()
+        trial_subset._trial_num = trial_subset._trial_num[mask].copy()
+        trial_subset.data = trial_subset.data[mask].copy()
+
+        return trial_subset
+
+    def trial_mean(self, within_trial=True, ignore_nan=False):
+        """Get the mean eye parameters within or across trials.
+
+        Parameters
+        ----------
+        within_trial : bool, default True
+            Whether to compute within_trial_mean or across_trial_mean.
+        ignore_nan : bool, default False
+            Whether to return the `mean` or `nanmean`.
+
+        Returns
+        -------
+        trial_mean : TrialEyeTracking
+            A new `TrialEyeTracking` object with the mean within/across trials.
+
+        See Also
+        --------
+        `trial_std()`
+
+        """
+        trial_mean = self.copy()
+        if within_trial:
+            trial_mean._within_trial = True
+        else:
+            trial_mean._trial_num = np.asarray([np.nan])
+
+        if ignore_nan:
+            if within_trial:
+                trial_mean.data = self.data.applymap(np.nanmean)
+            else:
+                trial_mean.data = self._across_trials_operation(np.nanmean)
+        else:
+            if within_trial:
+                trial_mean.data = self.data.applymap(np.mean)
+            else:
+                trial_mean.data = self._across_trials_operation(np.mean)
+
+        return trial_mean
+
+    def trial_std(self, within_trial=True, ignore_nan=False):
+        """Get the standard deviation of the eye parameters within or across trials.
+
+        Parameters
+        ----------
+        within_trial : bool, default True
+            Whether to compute within_trial_std or across_trial_std.
+        ignore_nan : bool, default False
+            Whether to return the `std` or `nanstd`.
+
+        Returns
+        -------
+        trial_std : TrialEyeTracking
+            A new `TrialEyeTracking` object with the standard deviation within/
+            across trials.
+
+        See Also
+        --------
+        `trial_mean()`
+
+        """
+        trial_std = self.copy()
+        if within_trial:
+            trial_std._within_trial = True
+        else:
+            trial_std._trial_num = np.asarray([np.nan])
+
+        if ignore_nan:
+            if within_trial:
+                trial_std.data = self.data.applymap(np.nanstd)
+            else:
+                trial_std.data = self._across_trials_operation(np.nanstd)
+        else:
+            if within_trial:
+                trial_std.data = self.data.applymap(np.std)
+            else:
+                trial_std.data = self._across_trials_operation(np.std)
+
+        return trial_std
+
+    def _across_trials_operation(self, func):
+        """Perform operation across trials (axis=0) for the pd.DataFrame data.
+        
+        Parameters
+        ----------
+        func : function
+            Function for performing the operation along axis 0.
+            
+        Returns
+        -------
+        func_df : pd.DataFrame
+            Dataframe that contains the results.
+        
+        """
+        trials = []
+        for i in range(self.data.shape[0]):
+            eye_param = []
+            for j in range(self.data.shape[1]):
+                eye_param.append(self.data.iloc[i, j].tolist())
+            trials.append(eye_param)
+        trials = np.asarray(trials)
+        func_arr = func(trials, axis=0)
+        eye_param_lst = [list(func_arr)]
+        func_df = pd.DataFrame(eye_param_lst, columns=self.data.columns)
+        return func_df
 
 
 class RunningSpeed(TimeseriesDataset):
@@ -910,17 +1206,17 @@ class RunningSpeed(TimeseriesDataset):
         if robust_range_:
             ax.axhspan(
                 *robust_range(
-                    self.data, half_width=1.5, center='median', spread='iqr'
+                    self.data, half_width=1.5, center="median", spread="iqr"
                 ),
-                color='gray',
-                label='Median $\pm$ 1.5 IQR',
+                color="gray",
+                label="Median $\pm$ 1.5 IQR",
                 alpha=0.5,
             )
             ax.legend()
 
         ax.plot(self.time_vec, self.data, **pltargs)
-        ax.set_xlabel('Time (s)')
-        ax.set_ylabel('Running speed')
+        ax.set_xlabel("Time (s)")
+        ax.set_ylabel("Running speed")
 
         if robust_range_:
             ax.set_ylim(
