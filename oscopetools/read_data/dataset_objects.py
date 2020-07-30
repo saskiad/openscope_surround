@@ -710,7 +710,6 @@ class TrialFluorescence(Fluorescence, TrialDataset):
 
             fluo_mean = self.trial_mean().data[0, 0, :]
             fluo_std = self.trial_std().data[0, 0, :]
-
             if fill_mean_pm_std:
                 ax.fill_between(
                     self.time_vec,
@@ -720,7 +719,6 @@ class TrialFluorescence(Fluorescence, TrialDataset):
                     alpha=alpha * 0.6,
                     **pltargs,
                 )
-
             ax.plot(self.time_vec, fluo_mean, alpha=alpha, **pltargs)
             if highlight_non_baseline:
                 stim_start = self.time_vec[0] + self._baseline_duration
@@ -826,12 +824,11 @@ class EyeTracking(TimeseriesDataset):
     ):
         super().__init__(timestep_width)
         self.data = pd.DataFrame(tracked_attributes)
-        self._is_trial = False
 
     @property
     def num_timesteps(self):
         """Number of timesteps in EyeTracking dataset."""
-        if self._is_trial:
+        if issubclass(type(self), TrialDataset):
             if self._within_trial:
                 return 1
             else:
@@ -842,7 +839,7 @@ class EyeTracking(TimeseriesDataset):
     def get_frame_range(self, start: int, stop: int = None):
         window = self.copy()
         if stop is not None:
-            if self._is_trial:
+            if issubclass(type(self), TrialDataset):
                 if not self._within_trial:
                     window.data = window.data.applymap(
                         lambda x: x[start:stop]
@@ -850,7 +847,7 @@ class EyeTracking(TimeseriesDataset):
             else:
                 window.data = window.data.iloc[start:stop, :].copy()
         else:
-            if self._is_trial:
+            if issubclass(type(self), TrialDataset):
                 if not self._within_trial:
                     window.data = window.data.applymap(
                         lambda x: x[start : start + 1]
@@ -1018,7 +1015,6 @@ class EyeTracking(TimeseriesDataset):
                 )
 
             if robust_range_:
-                # Set limits based on approx. data range, excluding outliers
                 ax.set_ylim(
                     robust_range(
                         self.data[self._y_pos_name],
@@ -1031,10 +1027,6 @@ class EyeTracking(TimeseriesDataset):
                         half_width=ROBUST_PLOT_RANGE_DEFAULT_HALF_WIDTH,
                     )
                 )
-            else:
-                # Set limits to a 180 deg standard range
-                ax.set_xlim(-90.0, 90.0)
-                ax.set_ylim(-90.0, 90.0)
 
         else:
             raise NotImplementedError(
@@ -1058,7 +1050,6 @@ class TrialEyeTracking(EyeTracking, TrialDataset):
 
         super().__init__(eye_tracking_df, timestep_width)
 
-        self._is_trial = True
         self._baseline_duration = 0
         self._both_ends_baseline = False
         self._trial_num = np.asarray(trial_num)
