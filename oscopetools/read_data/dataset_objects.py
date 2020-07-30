@@ -710,6 +710,7 @@ class TrialFluorescence(Fluorescence, TrialDataset):
 
             fluo_mean = self.trial_mean().data[0, 0, :]
             fluo_std = self.trial_std().data[0, 0, :]
+
             if fill_mean_pm_std:
                 ax.fill_between(
                     self.time_vec,
@@ -719,6 +720,7 @@ class TrialFluorescence(Fluorescence, TrialDataset):
                     alpha=alpha * 0.6,
                     **pltargs,
                 )
+
             ax.plot(self.time_vec, fluo_mean, alpha=alpha, **pltargs)
             if highlight_non_baseline:
                 stim_start = self.time_vec[0] + self._baseline_duration
@@ -1016,6 +1018,7 @@ class EyeTracking(TimeseriesDataset):
                 )
 
             if robust_range_:
+                # Set limits based on approx. data range, excluding outliers
                 ax.set_ylim(
                     robust_range(
                         self.data[self._y_pos_name],
@@ -1028,6 +1031,10 @@ class EyeTracking(TimeseriesDataset):
                         half_width=ROBUST_PLOT_RANGE_DEFAULT_HALF_WIDTH,
                     )
                 )
+            else:
+                # Set limits to a 180 deg standard range
+                ax.set_xlim(-90.0, 90.0)
+                ax.set_ylim(-90.0, 90.0)
 
         else:
             raise NotImplementedError(
