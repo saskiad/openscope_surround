@@ -826,12 +826,11 @@ class EyeTracking(TimeseriesDataset):
     ):
         super().__init__(timestep_width)
         self.data = pd.DataFrame(tracked_attributes)
-        self._is_trial = False
 
     @property
     def num_timesteps(self):
         """Number of timesteps in EyeTracking dataset."""
-        if self._is_trial:
+        if issubclass(type(self), TrialDataset):
             if self._within_trial:
                 return 1
             else:
@@ -842,7 +841,7 @@ class EyeTracking(TimeseriesDataset):
     def get_frame_range(self, start: int, stop: int = None):
         window = self.copy()
         if stop is not None:
-            if self._is_trial:
+            if issubclass(type(self), TrialDataset):
                 if not self._within_trial:
                     window.data = window.data.applymap(
                         lambda x: x[start:stop]
@@ -850,7 +849,7 @@ class EyeTracking(TimeseriesDataset):
             else:
                 window.data = window.data.iloc[start:stop, :].copy()
         else:
-            if self._is_trial:
+            if issubclass(type(self), TrialDataset):
                 if not self._within_trial:
                     window.data = window.data.applymap(
                         lambda x: x[start : start + 1]
@@ -1058,7 +1057,6 @@ class TrialEyeTracking(EyeTracking, TrialDataset):
 
         super().__init__(eye_tracking_df, timestep_width)
 
-        self._is_trial = True
         self._baseline_duration = 0
         self._both_ends_baseline = False
         self._trial_num = np.asarray(trial_num)
