@@ -104,12 +104,16 @@ def get_max_projection(file_path):
 
 
 def get_metadata(file_path):
-    import ast
+    import ast, datetime
 
     f = h5py.File(file_path, 'r')
     md = f.get('meta_data')[...].tolist()
     f.close()
-    meta_data = ast.literal_eval(md)
+    try:
+        meta_data = ast.literal_eval(md)
+    except:
+        dict_str = md.decode("UTF-8")
+        meta_data = eval(dict_str)
     return meta_data
 
 
