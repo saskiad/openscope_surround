@@ -15,8 +15,6 @@ from .greedy_pixelwise_rf import get_receptive_field_greedy
 from enum import Enum
 import warnings, sys, os
 
-sys.__stdout__ = sys.stdout
-
 
 class LSN_analysis:
     _ON_stim_value = 255
@@ -313,9 +311,8 @@ class LSN_analysis:
         ]
         responses = stim_trial.mean(2)
         LSN_template = self.LSN_stim[self._trial_mask]
-        self._allow_print(False)
-        self.chi_square_pvals = chi_square_RFs(responses, LSN_template, num_shuffles)
-        self._allow_print(True)
+        with gag():
+            self.chi_square_pvals = chi_square_RFs(responses, LSN_template, num_shuffles)
 
     @staticmethod
     def _remove_non_significant(RF, p_values, significant_lvl=0.05):
@@ -609,9 +606,8 @@ class LSN_analysis:
         _center_shift_xy_deg, center_shift_xy_pix : array-like, 1D
             The x- and y-shifts of the CS center relative to the center of the monitor in degrees and LSN pixels.
         """
-        self._allow_print(False)
-        stim_table = rd.get_stimulus_table(self.datafile_path, "center_surround")
-        self._allow_print(True)
+        with gag():
+            stim_table = rd.get_stimulus_table(self.datafile_path, "center_surround")
         center_xs = np.array(stim_table.Center_x)
         center_ys = np.array(stim_table.Center_y)
         is_same_x = center_xs.min() == center_xs.max()
@@ -648,7 +644,6 @@ class LSN_analysis:
             self.CS_center_radius_pix = CS_center_radius_deg / self._stim_size_deg
             self._is_CS_session = True
         except KeyError:
-            self._allow_print(True)
             print("This is not a center-surround session!")
             self._is_CS_session = False
 
@@ -931,14 +926,44 @@ class LSN_analysis:
         return ax
 
     def save_data(self, save_path):
-        raise NotImplementedError
-
-    @staticmethod
-    def _allow_print(allowed=True):
-        if allowed:
-            sys.stdout = sys.__stdout__
-        else:
-            sys.stdout = open(os.devnull, "w")
+        data_dict = {}
+        data_dict['cell IDs'] = self.cell_ids
+        data_dict['Chi-square p-values'] = self.chi_square_pvals
+        data_dict['CS center pos xy (pix)'] = self.CS_center_pos_xy_pix
+        data_dict['CS center radius (pix)'] = self.CS_center_radius_pix
+        data_dict['analyzed data file'] = self.datafile_path
+        data_dict['is use corrected LSN'] = self.is_use_corrected_LSN
+        data_dict['is use DFF z-score'] = self.is_use_dff_z_score
+        data_dict['is use positive fluo'] = self.is_use_positive_fluo
+        data_dict['is use valid eye pos'] = self.is_use_valid_eye_pos
+        data_dict['location masks'] = self.location_mask_dict
+        data_dict['LSN stimuli'] = self.LSN_stim
+        data_dict['monitor center xy (pix)'] = self.monitor_center_pix_xy
+        data_dict['num baseline frames'] = self.num_baseline_frames
+        data_dict['number of cells'] = self.num_cells
+        data_dict['OFF averaged responses'] = self.OFF_avg_responses
+        data_dict['OFF overlapping index'] = self.OFF_overlap_idx
+        data_dict['OFF RFs'] = self.OFF_RFs
+        data_dict['ON averaged responses'] = self.ON_avg_responses
+        data_dict['ON overlapping index'] = self.ON_overlap_idx
+        data_dict['ON RFs'] = self.ON_RFs
+        data_dict['RF location threshold'] = self.RF_loc_thresh
+        data_dict['RF type'] = self.RF_type
+        data_dict['valid eye pos masks'] = self.valid_eye_pos
+        data_dict['ref pos for LSN stim correction'] = self.yx_ref
+        data_dict['CS center xy shifts (deg)'] = self._center_shift_xy_deg
+        data_dict['CS center xy shifts (pix)'] = self._center_shift_xy_pix
+        data_dict['corrected LSN stim by eye pos'] = self._corrected_LSN_stim
+        data_dict['CS center diametere (deg)'] = self._CS_center_diameter_deg
+        data_dict['Fluo frame rate (Hz)'] = self._frame_rate_Hz
+        data_dict['Original full LSN stim'] = self._full_LSN_stim
+        data_dict['RF integration window length'] = self._integration_window_len
+        data_dict['RF integration window start'] = self._integration_window_start
+        data_dict['is CS session'] = self._is_CS_session
+        data_dict['LSN grid size (deg)'] = self._stim_size_deg
+        data_dict['LSN trial masks'] = self._trial_mask
+        np.save(save_path, data_dict)
+        print("Data saved!")
 
 
 class ReceptiveFieldPolarity(Enum):
@@ -969,3 +994,12 @@ class ReceptiveFieldPolarity(Enum):
 
     def _get_any():
         return np.random.randint(1, 3)
+
+
+class gag:
+    def __enter__(self):
+        self._original_stdout = sys.stdout
+        sys.stdout = open(os.devnull, 'w')
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.stdout = self._original_stdout
