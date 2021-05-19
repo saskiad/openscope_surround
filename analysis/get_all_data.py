@@ -11,7 +11,7 @@ import pandas as pd
 import json
 import h5py
 from PIL import Image
-from stim_table import create_stim_tables, get_center_coordinates
+from oscopetools.stim_table import create_stim_tables, get_center_coordinates
 from RunningData import get_running_data
 from get_eye_tracking import align_eye_tracking
 

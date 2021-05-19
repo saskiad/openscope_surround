@@ -6,7 +6,7 @@ Created on Sat Jun  6 20:29:20 2020
 @author: saskiad
 """
 
-from stim_table import load_stim, load_alignment
+from oscopetools.stim_table import load_stim, load_alignment
 import numpy as np
 
 

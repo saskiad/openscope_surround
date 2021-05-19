@@ -183,6 +183,10 @@ def DGsize_table(data, twop_frames, verbose=True):
             data, DGs_idx, attribute
         )[: len(stim_table)]
 
+    x_corr, y_corr = get_center_coordinates(data, DGs_idx)
+    stim_table['Center_x'] = x_corr
+    stim_table['Center_y'] = y_corr
+
     return stim_table
 
 
@@ -243,6 +247,10 @@ def center_surround_table(data, twop_frames, verbose=True):
         ),
         columns=('Start', 'End'),
     )
+
+    x_corr, y_corr = get_center_coordinates(data, center_idx)
+    stim_table['Center_x'] = x_corr
+    stim_table['Center_y'] = y_corr
 
     # TODO: make this take either center or surround SF and TF depending on which is not NaN
     for attribute in ['TF', 'SF', 'Contrast']:
@@ -338,9 +346,14 @@ def get_attribute_by_sweep(data, stimulus_idx, attribute):
         sweeps_with_condition = np.argwhere(sweep_order == condition)[:, 0]
 
         if condition > 0:  # blank sweep is -1
-            attribute_by_sweep[sweeps_with_condition] = sweep_table[condition][
-                attribute_idx
-            ]
+            try:
+                attribute_by_sweep[sweeps_with_condition] = sweep_table[
+                    condition
+                ][attribute_idx]
+            except:
+                attribute_by_sweep[sweeps_with_condition] = sweep_table[
+                    condition
+                ][attribute_idx][0]
 
     return attribute_by_sweep
 
