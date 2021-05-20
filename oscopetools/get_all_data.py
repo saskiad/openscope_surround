@@ -66,49 +66,13 @@ def get_all_data(path_name, save_path, expt_name, row):
     roi_locations['cell_id'] = cell_ids
 
     # eyetracking
-    eye_data = pd.DataFrame()
     for fn in os.listdir(eye_path):
-        if fn.endswith('ellipse.h5'):
-            eye_file = os.path.join(eye_path, fn)
         if fn.endswith('mapping.h5'):
             dlc_file = os.path.join(eye_path, fn)
-    pupil_area = pd.read_hdf(dlc_file, 'raw_pupil_areas')
-    eye_area = pd.read_hdf(dlc_file, 'raw_eye_areas')
-    pos = pd.read_hdf(dlc_file, 'raw_screen_coordinates_spherical')
-
-    ##temporal alignment
     for f in os.listdir(expt_path):
         if f.endswith('time_synchronization.h5'):
             temporal_alignment_file = os.path.join(expt_path, f)
-    f = h5py.File(temporal_alignment_file, 'r')
-    eye_frames = f['eye_tracking_alignment'].value
-    f.close()
-    eye_frames = eye_frames.astype(int)
-    eye_frames = eye_frames[np.where(eye_frames > 0)]
-
-    eye_area_sync = eye_area[eye_frames]
-    pupil_area_sync = pupil_area[eye_frames]
-    x_pos_sync = pos.x_pos_deg.values[eye_frames]
-    y_pos_sync = pos.y_pos_deg.values[eye_frames]
-
-    ##correcting dropped camera frames
-    test = eye_frames[np.isfinite(eye_frames)]
-    test = test.astype(int)
-    temp2 = np.bincount(test)
-    dropped_camera_frames = np.where(temp2 > 2)[0]
-    for a in dropped_camera_frames:
-        null_2p_frames = np.where(eye_frames == a)[0]
-        eye_area_sync[null_2p_frames] = np.NaN
-        pupil_area_sync[null_2p_frames] = np.NaN
-        x_pos_sync[null_2p_frames] = np.NaN
-        y_pos_sync[null_2p_frames] = np.NaN
-
-    eye_sync = pd.DataFrame(
-        data=np.vstack(
-            (eye_area_sync, pupil_area_sync, x_pos_sync, y_pos_sync)
-        ).T,
-        columns=('eye_area', 'pupil_area', 'x_pos_deg', 'y_pos_deg'),
-    )
+    eye_sync = align_eye_tracking(dlc_file, temporal_alignment_file)
 
     # max projection
     mp_path = os.path.join(proc_path, 'max_downsample_4Hz_0.png')
@@ -148,7 +112,7 @@ def get_all_data(path_name, save_path, expt_name, row):
     print("Saving data to: ", save_file)
     store = pd.HDFStore(save_file)
     store['roi_table'] = roi_locations
-    for key in list(stim_table.keys()):
+    for key in stim_table.keys():
         store[key] = stim_table[key]
     store['eye_tracking'] = eye_sync
 
