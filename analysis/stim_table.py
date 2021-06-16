@@ -166,7 +166,7 @@ def DGsize_table(data, twop_frames, verbose = True):
         stim_table[attribute] = get_attribute_by_sweep(
             data, DGs_idx, attribute
         )[:len(stim_table)]
-    
+
     x_corr, y_corr = get_center_coordinates(data, DGs_idx)
     stim_table['Center_x'] = x_corr
     stim_table['Center_y'] = y_corr
@@ -223,7 +223,7 @@ def center_surround_table(data, twop_frames, verbose = True):
         )),
         columns=('Start', 'End')
     )
-        
+
     x_corr, y_corr = get_center_coordinates(data, center_idx)
     stim_table['Center_x'] = x_corr
     stim_table['Center_y'] = y_corr
@@ -326,7 +326,7 @@ def get_attribute_by_sweep(data, stimulus_idx, attribute):
             try:
                 attribute_by_sweep[sweeps_with_condition] = sweep_table[condition][attribute_idx]
             except:
-                attribute_by_sweep[sweeps_with_condition] = sweep_table[condition][attribute_idx][0] 
+                attribute_by_sweep[sweeps_with_condition] = sweep_table[condition][attribute_idx][0]
 
     return attribute_by_sweep
 
@@ -383,7 +383,7 @@ def load_alignment(exptpath):
             ophys_path = os.path.join(exptpath, f)
     for f in os.listdir(ophys_path):
         if f.endswith('time_synchronization.h5'):
-            temporal_alignment_file = os.path.join(ophys_path, f)           
+            temporal_alignment_file = os.path.join(ophys_path, f)
     f = h5py.File(temporal_alignment_file, 'r')
     twop_frames = f['stimulus_alignment'].value
     f.close()

@@ -83,11 +83,11 @@ class LocallySparseNoise:
                 self.response_events_off_8deg,
             ) = self.get_stimulus_response(self.LSN_8deg)
 =======
-        
+
         f = h5py.File(dff_path, 'r')
         self.dff = f['data'][()]
         f.close()
-        
+
         self.stim_table_sp, _, _ = core.get_stim_table(self.session_id, 'spontaneous')
 
         lsn_name = 'locally_sparse_noise'
@@ -131,7 +131,7 @@ response events_off: mean response, s.e.m., and number of responsive trials for 
             ].mean()
 =======
         sweep_events = pd.DataFrame(index=self.stim_table.index.values, columns=np.array(range(self.numbercells)).astype(str))
-        
+
         for index,row in self.stim_table.iterrows():
             for nc in range(self.numbercells):
                 sweep_events[str(nc)][index] = self.l0_events[nc, int(row.start)-28:int(row.start)+35]
@@ -310,7 +310,7 @@ if __name__ == '__main__':
 <<<<<<< Updated upstream
     lsn = LocallySparseNoise(session_id=session_id)
 =======
-    
+
     dff_path = r'/Volumes/My Passport/Openscope Multiplex/891653201/892006924_dff.h5
     lsn = LocallySparseNoise(session_id=session_id)
 >>>>>>> Stashed changes

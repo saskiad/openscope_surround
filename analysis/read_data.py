@@ -71,16 +71,16 @@ def get_stimulus_epochs(file_path, session_type):
         stim_epoch.sort_values(by='Start', inplace=True)
         stim_epoch.reset_index(inplace=True)
         stim_epoch['Duration'] = stim_epoch.End - stim_epoch.Start
-    
+
     elif session_type=='drifting_gratings_grid':
         stim_name_1 = 'drifting_gratings_grid'
         stim_epoch = get_epochs(file_path, stim_name_1)
     elif session_type=='center_surround':
         stim_name_1 = 'center_surround'
         stim_epoch = get_epochs(file_path, stim_name_1)
-    
+
     return stim_epoch
-        
+
 def get_epochs(file_path, stim_name_1):
         stim1 = get_stimulus_table(file_path, stim_name_1)
         stim2 = get_stimulus_table(file_path, 'locally_sparse_noise')
@@ -99,7 +99,7 @@ def get_epochs(file_path, stim_name_1):
         stim_epoch.reset_index(inplace=True)
         stim_epoch['Duration'] = stim_epoch.End - stim_epoch.Start
         return stim_epoch
-        
 
 
-    
+
+

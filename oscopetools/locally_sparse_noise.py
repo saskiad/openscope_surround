@@ -48,8 +48,8 @@ class LocallySparseNoise:
         self.dff = f['data'][()]
 =======
         self.session_id = self.expt_path.split('/')[-1].split('_')[-2]
-        
-        #load dff traces 
+
+        #load dff traces
         f = h5py.File(self.expt_path, 'r')
         self.dff = f['dff_traces'][()]
 >>>>>>> Stashed changes:analysis/locally_sparse_noise.py
@@ -62,7 +62,7 @@ class LocallySparseNoise:
         stim_dict = lsnCS_create_stim_table(self.expt_path)
         self.stim_table = stim_dict['locally_sparse_noise']
 =======
-        
+
         #create stimulus table for locally sparse noise
         self.stim_table = pd.read_hdf(self.expt_path, 'locally_sparse_noise')
 >>>>>>> Stashed changes:analysis/locally_sparse_noise.py
@@ -84,17 +84,17 @@ class LocallySparseNoise:
         # save outputs
         self.save_data()
 =======
-        
+
         #load eyetracking
         self.pupil_pos = pd.read_hdf(self.expt_path, 'eye_tracking')
-        
+
         #run analysis
         self.sweep_response, self.mean_sweep_response, self.response_on, self.response_off, self.sweep_eye, self.mean_sweep_eye = self.get_stimulus_response(self.LSN)
         self.peak = self.get_peak()
-        
+
         #save outputs
 #        self.save_data()
-        
+
         #plot traces
         self.plot_LSN_Traces()
 >>>>>>> Stashed changes:analysis/locally_sparse_noise.py
@@ -125,9 +125,9 @@ response_off: mean response, s.e.m., and number of responsive trials for each bl
                 ]
 =======
         sweep_response = pd.DataFrame(index=self.stim_table.index.values, columns=np.array(range(self.numbercells)).astype(str))
-        
+
         sweep_eye = pd.DataFrame(index=self.stim_table.index.values, columns=('x_pos_deg','y_pos_deg'))
-        
+
         for index,row in self.stim_table.iterrows():
             for nc in range(self.numbercells):
                 sweep_response[str(nc)][index] = self.dff[nc, int(row.Start)-28:int(row.Start)+35]
@@ -137,7 +137,7 @@ response_off: mean response, s.e.m., and number of responsive trials for each bl
 
         mean_sweep_response = sweep_response.applymap(do_sweep_mean_shifted)
         mean_sweep_eye = sweep_eye.applymap(do_eye)
-        
+
 
 <<<<<<< Updated upstream:oscopetools/locally_sparse_noise.py
         # make spontaneous p_values
@@ -159,7 +159,7 @@ response_off: mean response, s.e.m., and number of responsive trials for each bl
         #            sweep_p_values[str(nc)] = p_values
 
 =======
-        
+
 >>>>>>> Stashed changes:analysis/locally_sparse_noise.py
         x_shape = LSN.shape[1]
         y_shape = LSN.shape[2]
@@ -206,7 +206,7 @@ response_off: mean response, s.e.m., and number of responsive trials for each bl
                 response_off[xp,yp,:,0] = subset_off.mean(axis=0)
                 response_off[xp,yp,:,1] = subset_off.std(axis=0)/np.sqrt(len(subset_off))
         return sweep_response, mean_sweep_response, response_on, response_off, sweep_eye, mean_sweep_eye
-    
+
 >>>>>>> Stashed changes:analysis/locally_sparse_noise.py
     def get_peak(self):
         '''creates a table of metrics for each cell. We can make this more useful in the future
@@ -235,8 +235,8 @@ peak dataframe
 =======
         on_rfs = np.where(self.response_on[:,:,:,2]>0.25)[2]
         off_rfs = np.where(self.response_off[:,:,:,2]>0.25)[2]
-        peak.rf_on.loc[on_rfs] = True 
-        peak.rf_off.loc[off_rfs] = True 
+        peak.rf_on.loc[on_rfs] = True
+        peak.rf_off.loc[off_rfs] = True
         return peak
 
     def save_data(self):
@@ -262,7 +262,7 @@ if __name__ == '__main__':
     expt_path = r'/Volumes/My Passport/Openscope Multiplex/891653201'
     lsn = LocallySparseNoise(expt_path=expt_path)
 =======
-        
+
     def plot_LSN_Traces(self):
         '''plots ON and OFF traces for each position for each cell'''
         print "Plotting LSN traces for all cells"
@@ -294,16 +294,16 @@ if __name__ == '__main__':
             for i in range(1,sp_pt+1):
                 ax = plt.subplot(8,14,i)
                 ax.set_ylim(vmin, vmax)
-            
+
             plt.tight_layout()
             plt.suptitle("Cell " + str(nc+1), fontsize=20)
             plt.subplots_adjust(top=0.9)
             filename = 'Traces LSN Cell_'+str(nc+1)+'.png'
-            fullfilename = os.path.join(r'/Users/saskiad/Documents/Data/Openscope_Multiplex/analysis', filename) 
-            plt.savefig(fullfilename)   
-            plt.close()          
+            fullfilename = os.path.join(r'/Users/saskiad/Documents/Data/Openscope_Multiplex/analysis', filename)
+            plt.savefig(fullfilename)
+            plt.close()
 
-                    
+
 if __name__=='__main__':
     lsn_path = r'/Users/saskiad/Code/openscope_surround/stimulus/sparse_noise_8x14.npy' #update this to local path the the stimulus array
     expt_path = r'/Users/saskiad/Dropbox/Openscope Multiplex/Center Surround/Center_Surround_1010436210_data.h5'

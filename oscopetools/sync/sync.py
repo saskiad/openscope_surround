@@ -158,7 +158,7 @@ class Sync(object):
     def stop(self):
         """
         Stops all tasks.  They can be restarted.
-        
+
         ***This doesn't seem to work sometimes.  I don't know why.***
 
         #should we just use clear?
