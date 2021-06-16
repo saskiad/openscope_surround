@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 import h5py
 
-from sync import Dataset
+from oscopetools.sync import Dataset
 
 
 # Generic interface for creating stim tables. PREFERRED.

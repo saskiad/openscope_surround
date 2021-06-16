@@ -11,7 +11,7 @@ import pandas as pd
 import h5py
 
 import cPickle as pickle
-from sync import Dataset
+from oscopetools.sync import Dataset
 import tifffile as tiff
 import matplotlib.pyplot as plt
 
