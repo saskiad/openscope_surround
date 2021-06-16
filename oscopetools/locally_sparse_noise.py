@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Wed Aug 22 10:59:54 2018
@@ -65,7 +65,7 @@ response_off: mean response, s.e.m., and number of responsive trials for each bl
 
 
         '''
-        sweep_response = pd.DataFrame(index=self.stim_table.index.values, columns=np.array(range(self.numbercells)).astype(str))
+        sweep_response = pd.DataFrame(index=self.stim_table.index.values, columns=np.array(list(range(self.numbercells))).astype(str))
 
         sweep_eye = pd.DataFrame(index=self.stim_table.index.values, columns=('x_pos_deg','y_pos_deg'))
 
@@ -103,7 +103,7 @@ Returns
 -------
 peak dataframe
         '''
-        peak = pd.DataFrame(columns=('rf_on','rf_off'), index=range(self.numbercells))
+        peak = pd.DataFrame(columns=('rf_on','rf_off'), index=list(range(self.numbercells)))
         peak['rf_on'] = False
         peak['rf_off'] = False
         on_rfs = np.where(self.response_on[:,:,:,2]>0.25)[2]
@@ -115,7 +115,7 @@ peak dataframe
     def save_data(self):
         '''saves intermediate analysis files in an h5 file'''
         save_file = os.path.join(r'/Users/saskiad/Documents/Data/Openscope_Multiplex/analysis', str(self.session_id)+"_lsn_analysis.h5")
-        print "Saving data to: ", save_file
+        print("Saving data to: ", save_file)
         store = pd.HDFStore(save_file)
         store['sweep_response'] = self.sweep_response
         store['mean_sweep_response'] = self.mean_sweep_response
@@ -129,11 +129,11 @@ peak dataframe
 
     def plot_LSN_Traces(self):
         '''plots ON and OFF traces for each position for each cell'''
-        print "Plotting LSN traces for all cells"
+        print("Plotting LSN traces for all cells")
 
         for nc in range(self.numbercells):
             if np.mod(nc,100)==0:
-                print "Cell #", str(nc)
+                print("Cell #", str(nc))
             plt.figure(nc, figsize=(24,20))
             vmax=0
             vmin=0
