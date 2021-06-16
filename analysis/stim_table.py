@@ -322,7 +322,7 @@ def get_attribute_by_sweep(data, stimulus_idx, attribute):
     for i_condition, condition in enumerate(unique_conditions):
         sweeps_with_condition = np.argwhere(sweep_order == condition)[:, 0]
 
-        if condition > 0:  # blank sweep is -1
+        if condition >= 0:  # blank sweep is -1
             try:
                 attribute_by_sweep[sweeps_with_condition] = sweep_table[condition][attribute_idx]
             except:

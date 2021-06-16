@@ -132,7 +132,8 @@ response_std: std of response to each stimulus condition
 
         #compute mean response across trials, only use trials within eye_thresh of mean eye position        
         response = np.empty((8, 2, 6, self.numbercells, 4)) #ori X TF x size X cells X mean, std, #trials, % significant trials
-             
+        response[:] = np.NaN     
+        
         for oi, ori in enumerate(self.orivals):
             for ti, tf in enumerate(self.tfvals):
                 for si, size in enumerate(self.sizevals):
