@@ -103,13 +103,13 @@ class CenterSurround:
             self.STRENGTH,
             self.TUNING,
             self.CONTEXT,
-            self.DIR,
         ) = self.get_metrics()
 
         # save outputs
-        self.save_data()
 
-        # plot traces
+    #        self.save_data()
+
+    # plot traces
 
     def get_spont_table(self):
         '''finds the window of spotaneous activity during the session'''
@@ -266,13 +266,13 @@ response_std: std of response to each stimulus condition
 
         for ci, cond in enumerate(self.conditions):
             if cond == 'blank':
-                cell_trials[:, ci, :, :] = self.mean_sweep_response[
+                cell_trials[:, ci, :] = self.mean_sweep_response[
                     (self.stim_table.condition == cond)
                     & (self.mean_sweep_eye.total < self.eye_thresh)
                 ].values[:n_trials]
             else:
                 for oi, cori in enumerate(self.orivals):
-                    cell_trials[oi, ci, :, :] = self.mean_sweep_response[
+                    cell_trials[oi, ci, :] = self.mean_sweep_response[
                         (self.stim_table.Center_Ori == cori)
                         & (self.stim_table.condition == cond)
                         & (self.mean_sweep_eye.total < self.eye_thresh)
@@ -324,7 +324,6 @@ metrics dataframe
 
         metrics = pd.DataFrame(
             columns=(
-                'cell_index',
                 'center_dir',
                 'center_osi',
                 'center_dsi',
@@ -333,11 +332,9 @@ metrics dataframe
                 'suppression_strength',
                 'suppression_tuning',
                 'cmi',
-                'dir_percent',
             ),
             index=cell_index,
         )
-        metrics.cell_index = cell_index
 
         # cross-validated metrics
         DSI = pd.DataFrame(columns=cell_index.astype(str), index=range(n_iter))
@@ -355,12 +352,11 @@ metrics dataframe
         CONTEXT = pd.DataFrame(
             columns=cell_index.astype(str), index=range(n_iter)
         )
-        DIR = pd.DataFrame(columns=cell_index.astype(str), index=range(n_iter))
 
         for ni in range(n_iter):
             # find pref direction for each cell for center only condition
-            #            response_first = response_first[:,:,cell_index,:]
-            #            response_second = response_second[:,:,cell_index,:]
+            response_first = response_first[:, :, cell_index, :]
+            response_second = response_second[:, :, cell_index, :]
             sort = np.where(
                 response_first[:, 0, :, ni]
                 == np.nanmax(response_first[:, 0, :, ni], axis=(0))
@@ -369,8 +365,6 @@ metrics dataframe
             pref_ori = sort[0][sortind]
             cell_index = sort[1][sortind]
             inds = np.vstack((pref_ori, cell_index))
-
-            DIR.loc[ni] = pref_ori
 
             # osi
             OSI.loc[ni] = self.get_osi(response_second[:, 0, inds[1], ni])
@@ -385,10 +379,6 @@ metrics dataframe
             center = response_second[inds[0], 0, inds[1], ni]
             iso = response_second[inds[0], 1, inds[1], ni]
             ortho = response_second[inds[0], 2, inds[1], ni]
-            center = np.where(center > 0, center, 0)
-            iso = np.where(iso > 0, iso, 0)
-            ortho = np.where(ortho > 0, ortho, 0)
-
             # suppression strength
             STRENGTH.loc[ni] = (center - ((iso + ortho) / 2)) / center
 
@@ -413,20 +403,14 @@ metrics dataframe
         metrics['suppression_tuning'] = TUNING.mean().values
         metrics['cmi'] = CONTEXT.mean().values
 
-        # how consistent is the selected preferred direction?
-        for nc in range(self.numbercells):
-            metrics['dir_percent'].loc[nc] = DIR[str(nc)].value_counts().max()
-
         # non cross-validated metrics
         #        cell_index = np.where(np.isfinite(self.dff[:,0]))[0]
-        #        cell_index = np.array(range(self.numbercells))
+        cell_index = np.array(range(self.numbercells))
         sort = np.where(
-            self.response[:, 0, :, 0]
-            == np.nanmax(self.response[:, 0, :, 0], axis=0)
+            self.response[:, 0, cell_index, 0]
+            == np.nanmax(self.response[:, 0, cell_index, 0], axis=0)
         )
-        #        sort = np.where(self.response[:,0,:,0] == np.nanmax(self.response[:,0,:,0], axis=0))
         sortind = np.argsort(sort[1])
-        cell_index = sort[1][sortind]
         metrics['center_dir'] = sort[0][sortind]
         metrics['center_mean'] = self.response[
             sort[0][sortind], 0, cell_index, 0
@@ -446,27 +430,17 @@ metrics dataframe
         ]
         metrics['ortho_std'] = self.response[sort[0][sortind], 2, cell_index, 1]
 
-        b = set(metrics.index)
-        a = set(range(self.numbercells))
-        toadd = a.difference(b)
-        if len(toadd) > 0:
-            newdf = pd.DataFrame(columns=metrics.columns, index=toadd)
-            newdf.cell_index = toadd
-            newdf.valid = False
-            metrics = metrics.append(newdf)
-            metrics.sort_index(inplace=True)
-
         metrics = metrics.join(self.roi[['cell_id', 'session_id', 'valid']])
         metrics['cre'] = self.cre
         metrics['area'] = self.area
         metrics['depth'] = self.depth
 
-        return metrics, OSI, DSI, ISO, ORTHO, STRENGTH, TUNING, CONTEXT, DIR
+        return metrics, OSI, DSI, ISO, ORTHO, STRENGTH, TUNING, CONTEXT
 
     def save_data(self):
         '''saves intermediate analysis files in an h5 file'''
         save_file = os.path.join(
-            r'/Users/saskiad/Documents/Data/Openscope_Multiplex_trim/analysis',
+            r'/Users/saskiad/Documents/Data/Openscope_Multiplex/analysis_py3',
             str(self.session_id) + "_cs_analysis.h5",
         )
         print("Saving data to: ", save_file)
@@ -484,47 +458,39 @@ metrics dataframe
 
 
 if __name__ == '__main__':
-    #    expt_path = r'/Users/saskiad/Documents/Data/Openscope_Multiplex_trim/Center_Surround_993269234_data.h5'
-    ##    expt_path = r'/Users/saskiad/Dropbox/Openscope Multiplex New/Center Surround/Center_Surround_993269234_data.h5'
-    #    eye_thresh = 10
-    #    cre = 'test'
-    #    area = 'area test'
-    #    depth = '33'
-    #    cs = CenterSurround(expt_path=expt_path, eye_thresh=eye_thresh, cre=cre, area=area, depth=depth)
-
-    manifest = pd.read_csv(
-        r'/Users/saskiad/Dropbox/Openscope Multiplex/data manifest.csv'
+    expt_path = r'/Users/saskiad/Dropbox/Openscope Multiplex/Center Surround/Center_Surround_989418742_data.h5'
+    eye_thresh = 10
+    cre = 'test'
+    area = 'area test'
+    depth = '33'
+    cs = CenterSurround(
+        expt_path=expt_path,
+        eye_thresh=eye_thresh,
+        cre=cre,
+        area=area,
+        depth=depth,
     )
-    subset = manifest[manifest.Target == 'soma']
-    print(len(subset))
-    count = 0
-    failed = []
-    for index, row in subset.iterrows():
-        if np.isfinite(row.Center_Surround_Expt_ID):
-            count += 1
-            cre = row.Cre
-            area = row.Area
-            depth = row.Depth
-            #            expt_path = r'/Users/saskiad/Dropbox/Openscope Multiplex/Center Surround/Center_Surround_'+str(int(row.Center_Surround_Expt_ID))+'_data.h5'
-            expt_path = (
-                r'/Users/saskiad/Documents/Data/Openscope_Multiplex_trim/Center_Surround_'
-                + str(int(row.Center_Surround_Expt_ID))
-                + '_data.h5'
-            )
-            eye_thresh = 10
-            try:
-                cs = CenterSurround(
-                    expt_path=expt_path,
-                    eye_thresh=eye_thresh,
-                    cre=cre,
-                    area=area,
-                    depth=depth,
-                )
-                if count == 1:
-                    metrics_all = cs.metrics.copy()
-                    print("reached here")
-                else:
-                    metrics_all = metrics_all.append(cs.metrics)
-            except:
-                print(expt_path + " FAILED")
-                failed.append(int(row.Center_Surround_Expt_ID))
+
+#    manifest = pd.read_csv(r'/Users/saskiad/Dropbox/Openscope Multiplex/data manifest.csv')
+#    subset = manifest[manifest.Target=='soma']
+#    print(len(subset))
+#    count = 0
+#    failed = []
+#    for index, row in subset.iterrows():
+#        if np.isfinite(row.Center_Surround_Expt_ID):
+#            count+=1
+#            cre = row.Cre
+#            area = row.Area
+#            depth = row.Depth
+#            expt_path = r'/Users/saskiad/Dropbox/Openscope Multiplex/Center Surround/Center_Surround_'+str(int(row.Center_Surround_Expt_ID))+'_data.h5'
+#            eye_thresh = 10
+#            try:
+#                cs = CenterSurround(expt_path=expt_path, eye_thresh=eye_thresh, cre=cre, area=area, depth=depth)
+#                if count==1:
+#                    metrics_all = cs.metrics.copy()
+#                    print("reached here")
+#                else:
+#                    metrics_all = metrics_all.append(cs.metrics)
+#            except:
+#                print(expt_path + " FAILED")
+#                failed.append(int(row.Center_Surround_Expt_ID))
