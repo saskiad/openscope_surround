@@ -13,7 +13,7 @@ import h5py
 from PIL import Image
 from stim_table import create_stim_tables, get_center_coordinates
 from RunningData import get_running_data
-from get_eye_tracking import align_eye_tracking
+from oscopetools.get_eye_tracking import align_eye_tracking
 
 
 def get_all_data(path_name, save_path, expt_name, row):
