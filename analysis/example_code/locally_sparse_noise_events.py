@@ -26,63 +26,6 @@ class LocallySparseNoise:
         self.session_id = session_id
         save_path_head = #TODO
         self.save_path = os.path.join(save_path_head, 'LocallySparseNoise')
-<<<<<<< Updated upstream
-        self.l0_events = core.get_L0_events(self.session_id)
-        self.stim_table_sp, _, _ = core.get_stim_table(
-            self.session_id, 'spontaneous'
-        )
-        self.dxcm = core.get_running_speed(self.session_id)
-        try:
-            lsn_name = 'locally_sparse_noise'
-            (
-                self.stim_table,
-                self.numbercells,
-                self.specimen_ids,
-            ) = core.get_stim_table(self.session_id, lsn_name)
-            self.LSN = core.get_stimulus_template(self.session_id, lsn_name)
-            (
-                self.sweep_events,
-                self.mean_sweep_events,
-                self.sweep_p_values,
-                self.running_speed,
-                self.response_events_on,
-                self.response_events_off,
-            ) = self.get_stimulus_response(self.LSN)
-        except:
-            lsn_name = 'locally_sparse_noise_4deg'
-            (
-                self.stim_table,
-                self.numbercells,
-                self.specimen_ids,
-            ) = core.get_stim_table(self.session_id, lsn_name)
-            self.LSN_4deg = core.get_stimulus_template(
-                self.session_id, lsn_name
-            )
-            (
-                self.sweep_events_4deg,
-                self.mean_sweep_events_4deg,
-                self.sweep_p_values_4deg,
-                self.running_speed_4deg,
-                self.response_events_on_4deg,
-                self.response_events_off_4deg,
-            ) = self.get_stimulus_response(self.LSN_4deg)
-
-            lsn_name = 'locally_sparse_noise_8deg'
-            self.stim_table, _, _ = core.get_stim_table(
-                self.session_id, lsn_name
-            )
-            self.LSN_8deg = core.get_stimulus_template(
-                self.session_id, lsn_name
-            )
-            (
-                self.sweep_events_8deg,
-                self.mean_sweep_events_8deg,
-                self.sweep_p_values_8deg,
-                self.running_speed_8deg,
-                self.response_events_on_8deg,
-                self.response_events_off_8deg,
-            ) = self.get_stimulus_response(self.LSN_8deg)
-=======
 
         f = h5py.File(dff_path, 'r')
         self.dff = f['data'][()]
@@ -94,7 +37,6 @@ class LocallySparseNoise:
         self.stim_table, self.numbercells, self.specimen_ids = core.get_stim_table(self.session_id, lsn_name)
         self.LSN = core.get_stimulus_template(self.session_id, lsn_name)
         self.sweep_events, self.mean_sweep_events, self.sweep_p_values, self.running_speed, self.response_events_on, self.response_events_off = self.get_stimulus_response(self.LSN)
->>>>>>> Stashed changes
         self.peak = self.get_peak(lsn_name)
         self.save_data(lsn_name)
 
@@ -112,31 +54,11 @@ response events_off: mean response, s.e.m., and number of responsive trials for 
 
 
         '''
-<<<<<<< Updated upstream
-        sweep_events = pd.DataFrame(
-            index=self.stim_table.index.values,
-            columns=np.array(list(range(self.numbercells))).astype(str),
-        )
-        running_speed = pd.DataFrame(
-            index=self.stim_table.index.values,
-            columns=('running_speed', 'null'),
-        )
-        for index, row in self.stim_table.iterrows():
-            for nc in range(self.numbercells):
-                sweep_events[str(nc)][index] = self.l0_events[
-                    nc, int(row.start) - 28 : int(row.start) + 35
-                ]
-            running_speed.running_speed[index] = self.dxcm[
-                int(row.start) : int(row.start) + 7
-            ].mean()
-=======
         sweep_events = pd.DataFrame(index=self.stim_table.index.values, columns=np.array(range(self.numbercells)).astype(str))
 
         for index,row in self.stim_table.iterrows():
             for nc in range(self.numbercells):
                 sweep_events[str(nc)][index] = self.l0_events[nc, int(row.start)-28:int(row.start)+35]
-
->>>>>>> Stashed changes
 
         mean_sweep_events = sweep_events.applymap(do_sweep_mean_shifted)
 
@@ -307,10 +229,5 @@ peak dataframe
 
 if __name__ == '__main__':
     session_id = 569611979
-<<<<<<< Updated upstream
-    lsn = LocallySparseNoise(session_id=session_id)
-=======
-
     dff_path = r'/Volumes/My Passport/Openscope Multiplex/891653201/892006924_dff.h5
     lsn = LocallySparseNoise(session_id=session_id)
->>>>>>> Stashed changes
